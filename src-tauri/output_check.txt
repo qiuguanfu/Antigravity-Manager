@@ -1,20 +1,0 @@
-[1m[92m    Checking[0m tauri-plugin-fs v2.4.4
-[1m[92m   Compiling[0m antigravity_tools v0.1.0 (/Users/lbjlaq/Desktop/antigravity_tauri/src-tauri)
-[1m[92m    Checking[0m tauri-plugin-opener v2.5.2
-[1m[96m    Building[0m [=======================> ] 544/550: tauri-plugin-opener, taur...[1m[96m    Building[0m [=======================> ] 545/550: tauri-plugin-fs, antigrav...[K[1m[92m    Checking[0m tauri-plugin-dialog v2.4.2
-[1m[96m    Building[0m [=======================> ] 546/550: tauri-plugin-dialog, anti...[1m[96m    Building[0m [=======================> ] 547/550: tauri-plugin-dialog         [1m[96m    Building[0m [=======================> ] 548/550: antigravity_tools           [K[0m[1m[33mwarning[0m[0m[1m: unused variable: `name`[0m
-[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/modules/process.rs:18:13[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m18[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        let name = process.name().to_string_los[0m[0m[1m[38;5;12m...[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_name`[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default[0m
-
-[1m[96m    Building[0m [=======================> ] 548/550: antigravity_tools           [K[0m[1m[33mwarning[0m[0m[1m: unused variable: `name`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/modules/process.rs:188:13[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m188[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        let name = process.name().to_string_lo[0m[0m[1m[38;5;12m...[0m
-[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_name`[0m
-
-[1m[96m    Building[0m [=======================> ] 548/550: antigravity_tools           [K[1m[33mwarning[0m: `antigravity_tools` (lib) generated 2 warnings
-[1m[96m    Building[0m [=======================> ] 549/550: antigravity_tools(bin)      [K[1m[92m    Finished[0m ]8;;https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles\`dev` profile [unoptimized + debuginfo]]8;;\ target(s) in 1.68s

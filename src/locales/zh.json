@@ -254,18 +254,21 @@
         },
         "model": {
             "flash": "极速响应",
-            "flash_thinking": "轻量思考",
-            "pro_low": "标准版",
-            "pro_high": "高配版",
-            "pro_image": "图像生成 (1:1)",
-            "pro_image_16_9": "图像生成 (16:9)",
-            "pro_image_9_16": "图像生成 (9:16)",
-            "pro_image_4_3": "图像生成 (4:3)",
-            "pro_image_3_4": "图像生成 (3:4)",
-            "pro_image_1_1": "图像生成 (1:1)",
-            "claude_sonnet": "均衡模型",
-            "claude_sonnet_thinking": "深度思考",
-            "claude_opus_thinking": "最强推理"
+            "flash_preview": "极速预览",
+            "flash_lite": "轻量极速",
+            "flash_thinking": "思考能力",
+            "pro_legacy": "经典版",
+            "pro_low": "标准性能",
+            "pro_high": "最强推理",
+            "pro_image": "图片生成 (1:1)",
+            "pro_image_16_9": "图片生成 (16:9)",
+            "pro_image_9_16": "图片生成 (9:16)",
+            "pro_image_4_3": "图片生成 (4:3)",
+            "pro_image_3_4": "图片生成 (3:4)",
+            "pro_image_1_1": "图片生成 (1:1)",
+            "claude_sonnet": "代码推理",
+            "claude_sonnet_thinking": "思维链",
+            "claude_opus_thinking": "最强思维"
         },
         "mapping": {
             "title": "Claude Code 模型映射",
@@ -276,6 +279,7 @@
             "haiku_desc": "极速响应",
             "maps_to": "映射到 Antigravity",
             "apply_recommended": "应用推荐配置",
+            "restore_defaults": "恢复默认配置",
             "reset_all": "重置全部"
         },
         "models": {

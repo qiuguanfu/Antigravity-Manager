@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use reqwest::Client;
 use eventsource_stream::Eventsource;
 use futures::StreamExt;
@@ -27,11 +28,12 @@ impl GeminiClient {
         project_id: &str,
         session_id: &str,
         model_mapping: &std::collections::HashMap<String, String>,
+        signature_map: Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>, // 新增
     ) -> Result<impl futures::Stream<Item = Result<String, String>>, String> {
          // 使用 Antigravity 内部 API
         let url = "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse";
         
-        let contents = converter::convert_anthropic_to_gemini_contents(anthropic_request);
+        let contents = converter::convert_anthropic_to_gemini_contents_ext(anthropic_request, signature_map.clone()).await;
         let model_name = anthropic_request.model.clone();
         
         // System Instruction
@@ -48,45 +50,56 @@ impl GeminiClient {
         };
 
         // Generation Config
-        let generation_config = serde_json::json!({
+        let mut generation_config = serde_json::json!({
             "temperature": anthropic_request.temperature.unwrap_or(1.0),
             "topP": anthropic_request.top_p.unwrap_or(0.95),
-            "maxOutputTokens": anthropic_request.max_tokens.unwrap_or(16384),  // ✅ 增加到 16384 避免 MAX_TOKENS 问题
+            "maxOutputTokens": anthropic_request.max_tokens.unwrap_or(16384), // 平衡型配置
             "candidateCount": 1,
-            // "stopSequences": anthropic_request.stop_sequences // Optional support
         });
+
+        // 注入 Thinking Config (参考 neovate-code)
+        // 只有支持思维链的模型才注入，这里简化为判断是否包含 sonnet 或 thinking 字样
+        if model_name.contains("sonnet-3-7") || model_name.contains("thinking") || model_name.contains("claude-3-7") {
+             if let Some(config) = generation_config.as_object_mut() {
+                config.insert("thinkingConfig".to_string(), serde_json::json!({
+                    "includeThoughts": true,
+                    "thinkingBudget": 8191, // Google Protocol Limit < 8192, 8191 is max safe value
+                }));
+            }
+        }
 
         // 映射模型名 (Anthropic 模型名 -> Gemini 模型名，暂时直通或简单映射)
         // Claude Code 可能会传 "claude-3-5-sonnet-20240620" 等
         // 目前策略：尝试匹配 gemini 模型，或者默认使用 gemini-3-pro-low 如果传的是 anthropic 名字
-        let upstream_model = if let Some(mapped) = model_mapping.get(&model_name) {
-            tracing::info!("(Anthropic) 模型映射: {} -> {}", model_name, mapped);
+        // 鲁棒模糊映射机制 (参考 CLIProxyAPI 经验)
+        let initial_mapped = if let Some(mapped) = model_mapping.get(&model_name) {
+            tracing::info!("(Anthropic) 基础映射: {} -> {}", model_name, mapped);
             mapped.as_str()
         } else {
-            // 尝试前缀匹配或模糊匹配 (例如 "claude-3-5-sonnet-xxxx" -> match "claude-3-5-sonnet")
-            // 这里为了简单，先只做精确匹配，或者保留原来的 fallback
-            let mut mapped_model = model_name.as_str();
-            
-            // 遍历映射表，看是否有 key 是 model_name 的子串 (例如配置 "sonnet" -> "gemini-high")
-            for (key, val) in model_mapping.iter() {
-                if model_name.contains(key) {
-                    tracing::info!("(Anthropic) 模型模糊映射: {} (match '{}') -> {}", model_name, key, val);
-                    mapped_model = val.as_str();
-                    break;
-                }
-            }
-            
-            if mapped_model == model_name.as_str() {
-                // 没有命中任何配置，走默认硬编码逻辑
-                if model_name.contains("claude") {
-                     if model_name.contains("sonnet") { "gemini-3-pro-high" } else { "gemini-3-pro-low" }
-                } else {
-                    model_name.as_str()
-                }
-            } else {
-                mapped_model
-            }
+            model_name.as_str()
         };
+
+        let lower_name = initial_mapped.to_lowercase();
+        // 最终 API 型号转换：将内部型号转换为 Antigravity Daily API 实际支持的名称
+        // 参考 CLIProxyAPI 的 modelName2Alias 函数
+        let upstream_model = if lower_name == "gemini-3-flash" {
+            "gemini-3-flash-preview"
+        } else if lower_name == "gemini-3-pro-high" {
+            "gemini-3-pro-preview"
+        } else if lower_name.starts_with("gemini-") {
+             initial_mapped
+        } else if lower_name.contains("thinking") {
+             // 如果映射结果本身包含 thinking (如 claude-sonnet-4-5-thinking)，尝试直接透传
+             initial_mapped
+        } else if lower_name.contains("opus") {
+            "gemini-3-pro-preview" // 修正: High -> Preview
+        } else {
+            initial_mapped
+        };
+
+        if upstream_model != initial_mapped {
+            tracing::info!("(Anthropic) 模型 API 转换: {} -> {}", initial_mapped, upstream_model);
+        }
 
         let request_body = serde_json::json!({
             "project": project_id,
@@ -104,16 +117,28 @@ impl GeminiClient {
                 //     }
                 // },
                 // ✅ 暂时移除 tools 以避免 MALFORMED_FUNCTION_CALL 错误, 强制输出文本
-                // "tools": tools, 
                 "sessionId": session_id
             }
         });
+
+        // 记录请求详情以便调试 404
+        tracing::debug!(
+            "(Anthropic) 发起请求: {} -> {} | Project: {}", 
+            model_name, upstream_model, project_id
+        );
+        // tracing::trace!("(Anthropic) 请求体: {}", serde_json::to_string(&request_body).unwrap_or_default());
 
         let response = self.client
             .post(url)
             .bearer_auth(access_token)
             .header("Host", "daily-cloudcode-pa.sandbox.googleapis.com")
-            .header("User-Agent", "antigravity/1.11.3 windows/amd64")
+            .header("User-Agent", "claude-cli/1.0.83 (external, cli)")
+            .header("X-App", "cli") // 模拟 Claude CLI
+            .header("Anthropic-Beta", "claude-code-20250219,interleaved-thinking-2025-05-14") // 启用 Beta 特性
+            .header("X-Stainless-Lang", "js")
+            .header("X-Stainless-Package-Version", "0.55.1")
+            .header("X-Stainless-Os", "MacOS")
+            .header("X-Stainless-Arch", "arm64")
             .json(&request_body)
             .send()
             .await
@@ -121,8 +146,13 @@ impl GeminiClient {
         
         if !response.status().is_success() {
             let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            return Err(format!("API 返回错误 {}: {}", status, body));
+            // 强制捕获上游详细错误正文，辅助诊断 404/403 (quota, project, etc.)
+            let error_details = response.text().await.unwrap_or_else(|_| "无法读取错误详情".to_string());
+            tracing::error!(
+                "(Anthropic) 请求失败! 状态码: {}, 映射模型: {} (源: {}), 项目: {}, 错误详情: {}",
+                status, upstream_model, model_name, project_id, error_details
+            );
+            return Err(format!("上游服务错误 ({}): {}", status, error_details));
         }
 
         // 处理流式响应并转换为 Anthropic SSE 格式
@@ -165,12 +195,13 @@ impl GeminiClient {
         // 为了不把 client.rs 搞得太乱，建议把 "Gemini Stream -> Anthropic Stream" 的转换逻辑放到 converter.rs 或新的 proxy/anthropic.rs 中？
         // 这里仅负责发起请求，拿到 Gemini 的 ByteStream，然后 map 转换。
         
-        let msg_id = format!("msg_{}", Uuid::new_v4());
-        let created_model = model_name.clone();
+        let _msg_id = format!("msg_{}", Uuid::new_v4());
+        let _created_model = model_name.clone();
 
         let stream = response.bytes_stream()
             .eventsource()
             .flat_map(move |result| {
+                 let sig_map = Arc::clone(&signature_map);
                  match result {
                     Ok(event) => {
                         let data = event.data;
@@ -218,12 +249,12 @@ impl GeminiClient {
                                 .unwrap_or("UNKNOWN");
 
                             if has_thought {
-                                tracing::debug!("(Anthropic) 收到 thoughtSignature (思考过程), 跳过警告");
+                                tracing::debug!("(Anthropic) 收到 thoughtSignature (思考过程), 原始: {}", serde_json::to_string(&candidates).unwrap_or_default());
                             } else if reason == "MALFORMED_FUNCTION_CALL" {
                                 tracing::warn!("(Anthropic) Gemini 工具调用失败 (MALFORMED_FUNCTION_CALL), 请尝试禁用工具或简化 Prompt");
                             } else if reason == "STOP" {
                                 // STOP 但 text 为空,可能是只有 thoughtSignature 但没被解析出来,或者是真正的空响应
-                                tracing::debug!("(Anthropic) 收到空文本 (STOP), 可能是 metadata");
+                                tracing::debug!("(Anthropic) 收到空文本 (STOP), 可能是 metadata, 原始: {}", serde_json::to_string(&candidates).unwrap_or_default());
                             } else {
                                 // 其他情况才警告
                                 tracing::warn!(
@@ -245,14 +276,57 @@ impl GeminiClient {
                             _ => None
                         };
                         
+                        // 提取思维链信息
+                        let part = candidates.get(0)
+                            .and_then(|c| c.get("content"))
+                            .and_then(|c| c.get("parts"))
+                            .and_then(|p| p.get(0));
+                            
+                        let is_thought = part.and_then(|p| p.get("thought")).and_then(|t| t.as_bool()).unwrap_or(false);
+                        let thought_signature = part.and_then(|p| p.get("thoughtSignature")).and_then(|s| s.as_str());
+                        
+                        // 捕获 thoughtSignature 并存入 map (参考 endsock gist)
+                        if let Some(sig) = thought_signature {
+                            let mut map = futures::executor::block_on(sig_map.lock());
+                            if let Some(resp_id) = json.get("responseId").and_then(|s| s.as_str()) {
+                                map.insert(resp_id.to_string(), sig.to_string());
+                            } else {
+                                map.insert("latest".to_string(), sig.to_string());
+                            }
+                            tracing::debug!("(Anthropic) 捕获到 thoughtSignature 并已暂存");
+                        }
+
+                        // ✅ 方案更新：只有在有实际内容或结束原因时才发送 chunk
+                        // 内容包括：text, is_thought==true, 或者有 thoughtSignature
+                        let has_content = !text.is_empty() || is_thought || thought_signature.is_some();
+                        
+                        if !has_content {
+                            if let Some(reason) = finish_reason.as_deref() {
+                                if reason == "length" || reason == "stop" { 
+                                     // 关键：如果没内容就结束了 (MAX_TOKENS 或 STOP)，视为失败，抛出错误触发重试
+                                    tracing::warn!("(Anthropic) 检测到空响应且原因为 {}, 触发重试...", reason);
+                                    return futures::stream::iter(vec![Err(format!("Gemini 返回空内容 ({})", reason))]);
+                                }
+                            }
+                            
+                            if finish_reason.is_none() {
+                                tracing::debug!("(Anthropic) 跳过无内容的 chunk (无 text/thought/reason)");
+                                return futures::stream::iter(vec![]);
+                            }
+                        }
+
                         let chunk = serde_json::json!({
-                            "id": "chatcmpl-stream", // Dummy ID, server might overwrite or ignore
+                            "id": json.get("responseId").and_then(|s| s.as_str()).unwrap_or("chatcmpl-stream"), 
                             "object": "chat.completion.chunk",
                             "created": chrono::Utc::now().timestamp(),
                             "model": model_name,
                             "choices": [{
                                 "index": 0,
-                                "delta": { "content": text },
+                                "delta": { 
+                                    "content": text,
+                                    "thought": is_thought,
+                                    "thoughtSignature": thought_signature
+                                },
                                 "finish_reason": finish_reason
                             }]
                         });
@@ -278,10 +352,29 @@ impl GeminiClient {
         // 使用 Antigravity 内部 API
         let url = "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse";
         
-        let contents = converter::convert_openai_to_gemini_contents(&openai_request.messages);
-        let model_name = openai_request.model.clone(); // Clone for closure
+        // 1. 分离 System Message 和 User/Assistant Messages
+        let (system_messages, chat_messages): (Vec<_>, Vec<_>) = openai_request.messages.iter()
+            .partition(|m| m.role == "system");
+            
+        let has_system = !system_messages.is_empty();
+        let system_text = if has_system {
+            system_messages.iter()
+                .map(|m| m.content.text()) // 获取完整文本，不截断
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            "".to_string()
+        };
+
+        // 2. 这里的 contents 只包含非 system 消息
+        // converting Vec<&OpenAIMessage> to Vec<OpenAIMessage> for the converter (which expects &Vec<OpenAIMessage>... wait, converter takes &Vec<OpenAIMessage>)
+        // so we need to construct a new Vec.
+        let chat_messages_owned: Vec<converter::OpenAIMessage> = chat_messages.into_iter().cloned().collect();
+        let contents = converter::convert_openai_to_gemini_contents(&chat_messages_owned);
         
         // 解析模型后缀配置 (e.g. gemini-3-pro-image-16x9-4k)
+        let model_name = openai_request.model.clone(); // Clone for closure
+        
         let model_suffix_ar = if model_name.contains("-16x9") { Some("16:9") }
             else if model_name.contains("-9x16") { Some("9:16") }
             else if model_name.contains("-4x3") { Some("4:3") }
@@ -291,15 +384,28 @@ impl GeminiClient {
 
         let model_suffix_4k = model_name.contains("-4k") || model_name.contains("-hd");
 
-        // 解析图片配置 (参数优先 > 后缀 > 默认)
-        let aspect_ratio = match openai_request.size.as_deref() {
-            Some("1024x1792") => "9:16",
-            Some("1792x1024") => "16:9",
-            Some("768x1024") => "3:4",
-            Some("1024x768") => "4:3",
-            Some("1024x1024") => "1:1",
-            Some(_) => "1:1", // Fallback for unknown sizes
-            None => model_suffix_ar.unwrap_or("1:1"),
+        // 解析 extra params 中的图片配置
+        let extra_ar = openai_request.extra.as_ref()
+            .and_then(|m| m.get("aspectRatio").or(m.get("aspect_ratio")))
+            .and_then(|v| v.as_str());
+            
+        let extra_size = openai_request.extra.as_ref()
+             .and_then(|m| m.get("imageSize").or(m.get("image_size")))
+             .and_then(|v| v.as_str());
+
+        // 解析图片配置 (Extra 参数优先 > explicit size > 后缀 > 默认)
+        let aspect_ratio = if let Some(ar) = extra_ar {
+             ar
+        } else {
+             match openai_request.size.as_deref() {
+                Some("1024x1792") => "9:16",
+                Some("1792x1024") => "16:9",
+                Some("768x1024") => "3:4",
+                Some("1024x768") => "4:3",
+                Some("1024x1024") => "1:1",
+                Some(_) => "1:1", // Fallback for unknown sizes
+                None => model_suffix_ar.unwrap_or("1:1"),
+            }
         };
 
         let is_hd = match openai_request.quality.as_deref() {
@@ -321,7 +427,9 @@ impl GeminiClient {
              if let Some(config) = generation_config.as_object_mut() {
                 let mut image_config = serde_json::Map::new();
                 image_config.insert("aspectRatio".to_string(), serde_json::json!(aspect_ratio));
-                if is_hd {
+                
+                // 支持直接传 4K 或 hd
+                if is_hd || extra_size == Some("4K") || extra_size == Some("hd") {
                     image_config.insert("imageSize".to_string(), serde_json::json!("4K"));
                 }
                 
@@ -345,7 +453,7 @@ impl GeminiClient {
                 "contents": contents,
                 "systemInstruction": {
                     "role": "user",
-                    "parts": [{"text": ""}]
+                    "parts": [{"text": system_text}]
                 },
                 "generationConfig": generation_config,
                 "toolConfig": {
@@ -458,8 +566,23 @@ impl GeminiClient {
         // 使用 Antigravity 内部 API（非流式）
         let url = "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:generateContent";
         
-        // 转换为 Gemini contents 格式
-        let contents = converter::convert_openai_to_gemini_contents(&openai_request.messages);
+        // 1. 分离 System Message 和 User/Assistant Messages
+        let (system_messages, chat_messages): (Vec<_>, Vec<_>) = openai_request.messages.iter()
+            .partition(|m| m.role == "system");
+            
+        let has_system = !system_messages.is_empty();
+        let system_text = if has_system {
+            system_messages.iter()
+                .map(|m| m.content.text())
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            "".to_string()
+        };
+
+        // 2. 构造过滤后的 contents
+        let chat_messages_owned: Vec<converter::OpenAIMessage> = chat_messages.into_iter().cloned().collect();
+        let contents = converter::convert_openai_to_gemini_contents(&chat_messages_owned);
         
         // 构造 Antigravity 专用请求体
         // 解析模型后缀配置
@@ -473,15 +596,28 @@ impl GeminiClient {
 
         let model_suffix_4k = model_name.contains("-4k") || model_name.contains("-hd");
 
+        // 解析 extra params
+        let extra_ar = openai_request.extra.as_ref()
+            .and_then(|m| m.get("aspectRatio").or(m.get("aspect_ratio")))
+            .and_then(|v| v.as_str());
+            
+        let extra_size = openai_request.extra.as_ref()
+             .and_then(|m| m.get("imageSize").or(m.get("image_size")))
+             .and_then(|v| v.as_str());
+
         // 解析图片配置
-        let aspect_ratio = match openai_request.size.as_deref() {
-            Some("1024x1792") => "9:16",
-            Some("1792x1024") => "16:9",
-            Some("768x1024") => "3:4",
-            Some("1024x768") => "4:3",
-            Some("1024x1024") => "1:1",
-             Some(_) => "1:1",
-            None => model_suffix_ar.unwrap_or("1:1"),
+        let aspect_ratio = if let Some(ar) = extra_ar {
+             ar
+        } else {
+             match openai_request.size.as_deref() {
+                Some("1024x1792") => "9:16",
+                Some("1792x1024") => "16:9",
+                Some("768x1024") => "3:4",
+                Some("1024x768") => "4:3",
+                Some("1024x1024") => "1:1",
+                Some(_) => "1:1",
+                None => model_suffix_ar.unwrap_or("1:1"),
+            }
         };
 
         let is_hd = match openai_request.quality.as_deref() {
@@ -503,7 +639,8 @@ impl GeminiClient {
              if let Some(config) = generation_config.as_object_mut() {
                 let mut image_config = serde_json::Map::new();
                 image_config.insert("aspectRatio".to_string(), serde_json::json!(aspect_ratio));
-                if is_hd {
+                
+                 if is_hd || extra_size == Some("4K") || extra_size == Some("hd") {
                     image_config.insert("imageSize".to_string(), serde_json::json!("4K"));
                 }
                 config.insert("imageConfig".to_string(), serde_json::Value::Object(image_config));
@@ -527,7 +664,7 @@ impl GeminiClient {
                 "contents": contents,
                 "systemInstruction": {
                     "role": "user",
-                    "parts": [{"text": ""}]
+                    "parts": [{"text": system_text}]
                 },
                 "generationConfig": generation_config,
                 "toolConfig": {

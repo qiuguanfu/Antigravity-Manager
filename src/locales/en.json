@@ -254,18 +254,21 @@
         },
         "model": {
             "flash": "Fast Response",
-            "flash_thinking": "Light Thinking",
-            "pro_low": "Standard",
-            "pro_high": "High Performance",
+            "flash_preview": "Flash Preview",
+            "flash_lite": "Lite & Fast",
+            "flash_thinking": "Thinking Capability",
+            "pro_legacy": "Legacy Pro",
+            "pro_low": "High Performance",
+            "pro_high": "Best Reasoning",
             "pro_image": "Image Generation (1:1)",
             "pro_image_16_9": "Image Generation (16:9)",
             "pro_image_9_16": "Image Generation (9:16)",
             "pro_image_4_3": "Image Generation (4:3)",
             "pro_image_3_4": "Image Generation (3:4)",
             "pro_image_1_1": "Image Generation (1:1)",
-            "claude_sonnet": "Balanced",
-            "claude_sonnet_thinking": "Deep Thinking",
-            "claude_opus_thinking": "Strongest Reasoning"
+            "claude_sonnet": "Code Reasoning",
+            "claude_sonnet_thinking": "Chain of Thought",
+            "claude_opus_thinking": "Strongest Thinking"
         },
         "mapping": {
             "title": "Claude Code Model Mapping",
@@ -276,6 +279,7 @@
             "haiku_desc": "Fastest for quick answers",
             "maps_to": "Maps to Antigravity",
             "apply_recommended": "Apply Recommended",
+            "restore_defaults": "Restore Default Configuration",
             "reset_all": "Reset All"
         },
         "models": {

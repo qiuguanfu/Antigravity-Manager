@@ -8,7 +8,7 @@
   
   <p>
     <a href="https://github.com/lbjlaq/Antigravity-Manager">
-      <img src="https://img.shields.io/badge/Version-3.0.3-blue?style=flat-square" alt="Version">
+      <img src="https://img.shields.io/badge/Version-3.1.0-blue?style=flat-square" alt="Version">
     </a>
     <img src="https://img.shields.io/badge/Tauri-v2-orange?style=flat-square" alt="Tauri">
     <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square" alt="React">
@@ -31,7 +31,7 @@
 
 **Antigravity Tools 2API** 次世代版本发布！这不仅仅是一个账号管理器，它将您的桌面变成了一个强大的 **本地 AI 网关 (Local AI Gateway)**。
 
-通过内置的高性能 Rust 反代服务，您可以将浏览器中的 Web Session (`sid`, `__Secure-1PSID` 等) 转化为标准的 **OpenAI API** 接口。这意味着您可以在 **Cursor**, **Windsurf**, **LangChain**, **NextChat** 等任何支持 OpenAI 协议的应用中，无缝调用 Gemini 和 Claude 的高级模型能力。
+通过内置的高性能 Rust 反代服务，您可以将浏览器中的 Web Session (`sid`, `__Secure-1PSID` 等) 转化为标准的 **OpenAI API** 接口。这意味着您可以在 **Cherry Studio**, **NextChat**, **LangChain** 等任何支持 OpenAI 协议的应用中，无缝调用 Gemini 和 Claude 的高级模型能力。（注：Cursor, Windsurf 暂不兼容）
 
 > **寻找旧版文档?**
 > v2.0 纯账号管理版本的文档已移动至 [README_v2.md](./README_v2.md)。
@@ -65,7 +65,7 @@ Antigravity 的反代服务并非简单的请求转发，而是一个完整的 *
 
 ### 4. 🔗 多协议支持 (NEW!)
 除了 OpenAI 协议,现在完美支持 **Anthropic API** 格式:
-- **OpenAI 协议**: `/v1/chat/completions` - 兼容 Cursor, Windsurf, NextChat 等
+- **OpenAI 协议**: `/v1/chat/completions` - 兼容 Cherry Studio, NextChat 等 (Cursor, Windsurf 暂不兼容)
 - **Anthropic 协议**: `/v1/messages` - 原生支持 Claude Code CLI 等工具
 - **自动转换**: 无论使用哪种协议,底层都会自动转换为 Gemini 格式,实现完美兼容
 
@@ -156,19 +156,20 @@ claude "用 Python 写一个快速排序算法"
 
 | 模型 ID | 说明 |
 | :--- | :--- |
-| **gemini-2.5-flash** | **Flash 2.5**。极速响应，超高性价比。 |
-| **gemini-2.5-flash-thinking** | **Flash Thinking**。具备思考能力的轻量级模型。 |
+| **gemini-3-flash** | **Gemini 3 Flash**。最新一代闪电模型 (Native)。 |
 | **gemini-3-pro-high** | **Gemini 3 Pro**。Google 最强 reasoning 模型。 |
 | **gemini-3-pro-low** | **Gemini 3 Pro (Low)**。低配额消耗版。 |
+| **gemini-2.5-pro** | **Gemini 2.5 Pro**。平衡型主力模型。 |
+| **gemini-2.5-flash** | **Flash 2.5**。极速响应，超高性价比。 |
+| **gemini-2.5-flash-lite** | **Flash 2.5 Lite**。轻量级极致速度。 |
+| **gemini-2.5-flash-thinking** | **Flash Thinking**。具备思考能力的模型 (注意：易触发限流)。 |
+| **claude-sonnet-4-5** | **Claude 3.5 Sonnet**。(映射) 代码与逻辑推理首选 (Native)。 |
+| **claude-sonnet-4-5-thinking** | **Sonnet Thinking**。开启了思维链的 Sonnet (Native)。 |
+| **claude-opus-4-5-thinking** | **Opus Thinking**。Claude 最强思维模型 (Native)。 |
 | **gemini-3-pro-image** | **Imagen 3**。绘图专用模型 (默认 1:1 正方形)。 |
 | **gemini-3-pro-image-16x9** | **Imagen 3 横屏**。生成 16:9 横向图片。 |
 | **gemini-3-pro-image-9x16** | **Imagen 3 竖屏**。生成 9:16 手机壁纸。 |
-| **gemini-3-pro-image-4x3** | **Imagen 3 标准横图**。生成 4:3 比例图片。 |
 | **gemini-3-pro-image-4k** | **Imagen 3 高清**。生成 4K 超清图 (1:1)。 |
-| **gemini-3-pro-image-16x9-4k** | **Imagen 3 横屏高清**。生成 16:9 4K 超清图。 |
-| **claude-sonnet-4-5** | **Claude 3.5 Sonnet**。代码与逻辑推理首选。 |
-| **claude-sonnet-4-5-thinking** | **Sonnet Thinking**。开启了思维链的 Sonnet。 |
-| **claude-opus-4-5-thinking** | **Opus Thinking**。Claude 最强思维模型。 |
 
 #### 🎨 图片生成高级控制
 
@@ -190,7 +191,33 @@ claude "用 Python 写一个快速排序算法"
 
 > 💡 **提示**: 反代服务支持透传所有 Google/Anthropic 官方模型 ID，您可以直接使用官方文档中的任何模型名称。
 
+
 ## 🔄 版本更新
+
+### v3.1.0 (2025-12-18)
+
+#### 🚀 Claude Code 深度支持
+- **全系模型适配**：完美支持 Claude 3.5 Sonnet / Haiku / Opus 及其 4.5 预览版
+- **Thinking 模型原生支持**：
+  - 自动识别并处理 `thinking` 思维链内容
+  - 适配 **Gemini 2.0 Flash Thinking** 和 **Claude Sonnet Thinking**
+  - 智能预算控制：默认 `8k` 思考预算，最大化推理能力
+- **System Prompt 完美支持**：
+  - 正确解析并传递 `system` 角色提示词，确保复杂任务的角色设定生效
+  - 完美兼容 Claude Code 的各类系统指令
+
+#### ⚡ 核心反代重构
+- **SSE 状态机重写**：采用全新的状态机处理流式响应，彻底解决 `Thinking` 块与 `Text` 块的转换问题
+- **智能空响应处理**：
+  - 自动过滤无效的空 Chunk，解决 CLI 挂起问题
+  - 增强的预检机制，提前拦截 404/403 错误
+- **模型热重载**：修改模型映射配置后实时生效，无需重启服务
+
+#### 🐛 关键修复
+- **404 Not Found 修复**：为 `gemini-3-flash` 等预览模型添加内部别名映射
+- **UTF-8 编码修复**：解决流式日志截断导致的 Panic 问题
+- **Claude CLI 兼容性**：修复 `signature` 字段导致的各种 CLI 报错
+
 
 ### v3.0.3 (2025-12-17)
 - **✨ Refresh Token 批量导入**: 支持 JSON 数组和 Regex 智能提取，一次性导入多个账号

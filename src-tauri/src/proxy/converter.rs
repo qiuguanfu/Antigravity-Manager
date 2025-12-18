@@ -1,4 +1,4 @@
-
+use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 // use serde_json::Value;
 
@@ -29,7 +29,7 @@ impl MessageContent {
     /// 获取文本内容的预览
     pub fn preview(&self) -> String {
         match self {
-            MessageContent::Text(s) => if s.len() > 200 { format!("{}...", &s[..200]) } else { s.clone() },
+            MessageContent::Text(s) => if s.chars().count() > 200 { format!("{}...", s.chars().take(200).collect::<String>()) } else { s.clone() },
             MessageContent::Array(parts) => {
                 let mut s = String::new();
                 for part in parts {
@@ -37,7 +37,23 @@ impl MessageContent {
                         s.push_str(text);
                     }
                 }
-                if s.len() > 200 { format!("{}...", &s[..200]) } else { s }
+                if s.chars().count() > 200 { format!("{}...", s.chars().take(200).collect::<String>()) } else { s }
+            }
+        }
+    }
+
+    /// 获取完整文本内容
+    pub fn text(&self) -> String {
+         match self {
+            MessageContent::Text(s) => s.clone(),
+            MessageContent::Array(parts) => {
+                let mut s = String::new();
+                for part in parts {
+                    if let ContentPart::Text { text } = part {
+                        s.push_str(text);
+                    }
+                }
+                s
             }
         }
     }
@@ -67,6 +83,8 @@ pub struct OpenAIChatRequest {
     pub size: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quality: Option<String>,
+    #[serde(flatten)]
+    pub extra: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 // ===== Anthropic 格式定义 =====
@@ -76,6 +94,8 @@ pub struct OpenAIChatRequest {
 pub enum AnthropicContent {
     #[serde(rename = "text")]
     Text { text: String },
+    #[serde(rename = "thinking")]
+    Thinking { thinking: String, signature: Option<String> },
     #[serde(rename = "image")]
     Image { source: AnthropicImageSource },
 }
@@ -94,7 +114,9 @@ pub struct AnthropicMessage {
     // Anthropic content is always a list of blocks, but incoming JSON might process single string? 
     // Officially it can be string or array of blocks.
     #[serde(deserialize_with = "deserialize_anthropic_content")]
-    pub content: Vec<AnthropicContent>, 
+    pub content: Vec<AnthropicContent>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thought_signature: Option<String>, // 新增：用于存放思维链签名
 }
 
 // Custom deserializer to handle content being either string or array
@@ -205,6 +227,8 @@ pub struct GeminiPart {
     pub text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", rename = "inlineData")]
     pub inline_data: Option<GeminiInlineData>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thoughtSignature")]
+    pub thought_signature: Option<String>, // 新增
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -251,6 +275,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                 parts.push(GeminiPart {
                     text: None,
                     inline_data: Some(img),
+                    thought_signature: None,
                 });
             }
         }
@@ -267,7 +292,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                     if match_start > last_end {
                         let text_part = &text[last_end..match_start];
                         if !text_part.is_empty() {
-                            parts.push(GeminiPart { text: Some(text_part.to_string()), inline_data: None });
+                            parts.push(GeminiPart { text: Some(text_part.to_string()), inline_data: None, thought_signature: None });
                         }
                     }
                     
@@ -278,14 +303,14 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                     if role == "model" {
                         pending_images.push(inline_data);
                     } else {
-                        parts.push(GeminiPart { text: None, inline_data: Some(inline_data) });
+                        parts.push(GeminiPart { text: None, inline_data: Some(inline_data), thought_signature: None });
                     }
                     last_end = match_end;
                 }
                 if last_end < text.len() {
                     let text_part = &text[last_end..];
                     if !text_part.is_empty() {
-                        parts.push(GeminiPart { text: Some(text_part.to_string()), inline_data: None });
+                        parts.push(GeminiPart { text: Some(text_part.to_string()), inline_data: None, thought_signature: None });
                     }
                 }
             },
@@ -294,7 +319,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                 for part in content_parts {
                     match part {
                         ContentPart::Text { text } => {
-                            parts.push(GeminiPart { text: Some(text.clone()), inline_data: None });
+                            parts.push(GeminiPart { text: Some(text.clone()), inline_data: None, thought_signature: None });
                         },
                         ContentPart::ImageUrl { image_url } => {
                             let url = &image_url.url;
@@ -308,7 +333,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                                     pending_images.push(inline_data);
                                 } else {
                                     tracing::info!("解析到 Multimodal 图片数据 (Mime: {})", mime_type);
-                                    parts.push(GeminiPart { text: None, inline_data: Some(inline_data) });
+                                    parts.push(GeminiPart { text: None, inline_data: Some(inline_data), thought_signature: None });
                                 }
                             } else {
                                 tracing::warn!("忽略不支持的图片 URL 格式: {}", url);
@@ -324,6 +349,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
             parts.push(GeminiPart {
                 text: Some("[Image Generated]".to_string()), 
                 inline_data: None,
+                thought_signature: None,
             });
         }
 
@@ -331,6 +357,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
             parts.push(GeminiPart {
                 text: Some("".to_string()),
                 inline_data: None,
+                thought_signature: None,
             });
         }
         
@@ -360,6 +387,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
                 contents[i-1].parts.push(GeminiPart {
                     text: Some("\n\n".to_string()),
                     inline_data: None,
+                    thought_signature: None,
                 });
             }
             
@@ -374,7 +402,7 @@ pub fn convert_openai_to_gemini_contents(messages: &Vec<OpenAIMessage>) -> Vec<G
 }
 
 /// 将 Anthropic request 转换为 Gemini contents 数组
-pub fn convert_anthropic_to_gemini_contents(request: &AnthropicChatRequest) -> Vec<GeminiContent> {
+pub fn _convert_anthropic_to_gemini_contents(request: &AnthropicChatRequest) -> Vec<GeminiContent> {
     let mut contents = Vec::new();
     
     // 1. 处理 System Prompt
@@ -400,6 +428,7 @@ pub fn convert_anthropic_to_gemini_contents(request: &AnthropicChatRequest) -> V
                     parts.push(GeminiPart {
                         text: Some(text.clone()),
                         inline_data: None,
+                        thought_signature: None,
                     });
                 },
                 AnthropicContent::Image { source } => {
@@ -411,8 +440,14 @@ pub fn convert_anthropic_to_gemini_contents(request: &AnthropicChatRequest) -> V
                                 mime_type: source.media_type.clone(),
                                 data: source.data.clone(),
                             }),
+                            thought_signature: None,
                         });
                     }
+                },
+                AnthropicContent::Thinking { .. } => {
+                    // Gemini 目前不支持直接接收 thinking 类型的输入块，忽略之以避免 400 错误
+                    // 或者可以考虑将其转换为 text，但可能会干扰模型
+                    tracing::debug!("Ignoring thinking block in input message");
                 }
             }
         }
@@ -437,3 +472,84 @@ pub fn convert_anthropic_to_gemini_contents(request: &AnthropicChatRequest) -> V
 
     contents
 }
+
+/// 支持思维链签名的 Anthropic -> Gemini 转换
+pub async fn convert_anthropic_to_gemini_contents_ext(
+    request: &AnthropicChatRequest,
+    signature_map: Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>
+) -> Vec<GeminiContent> {
+    let mut contents = Vec::new();
+    let map = signature_map.lock().await;
+
+    for msg in &request.messages {
+        let role = match msg.role.as_str() {
+            "assistant" => "model",
+            "user" => "user",
+            _ => "user",
+        };
+
+        let mut parts = Vec::new();
+
+        for content in &msg.content {
+            match content {
+                AnthropicContent::Text { text } => {
+                    parts.push(GeminiPart {
+                        text: Some(text.clone()),
+                        inline_data: None,
+                        thought_signature: None,
+                    });
+                },
+                AnthropicContent::Image { source } => {
+                    if source.source_type == "base64" {
+                        parts.push(GeminiPart {
+                            text: None,
+                            inline_data: Some(GeminiInlineData {
+                                mime_type: source.media_type.clone(),
+                                data: source.data.clone(),
+                            }),
+                            thought_signature: None,
+                        });
+                    }
+                },
+                AnthropicContent::Thinking { .. } => {
+                    // 同样忽略 Thinking 输入
+                    tracing::debug!("Ignoring thinking block in input message (ext)");
+                }
+            }
+        }
+        
+        // 尝试回传 thoughtSignature
+        // 如果是最后一轮的 assistant 消息，且我们暂存了签名，则尝试回填
+        if role == "model" {
+            let sig = map.get("latest").cloned();
+            if let Some(s) = sig {
+                parts.push(GeminiPart {
+                    text: None,
+                    inline_data: None,
+                    thought_signature: Some(s),
+                });
+            }
+        }
+        
+        contents.push(GeminiContent {
+            role: role.to_string(),
+            parts,
+        });
+    }
+    
+    // 合并
+    let mut i = 1;
+    while i < contents.len() {
+        if contents[i].role == contents[i-1].role {
+             let mut parts_to_append = contents[i].parts.clone();
+             contents[i-1].parts.append(&mut parts_to_append);
+             contents.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+
+    contents
+}
+
+// 移除文件末尾多余的 Arc 引用

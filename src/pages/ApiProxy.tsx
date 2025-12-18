@@ -33,10 +33,6 @@ interface ProxyConfig {
 }
 
 interface AppConfig {
-    // Other fields omitted for brevity as we only need proxy here, 
-    // but in a real app we might want to type them all. 
-    // Since we pass the whole object back to save_config, we should try to type it loosely or fetch it fully.
-    // For now, let's type what we know.
     language: string;
     theme: string;
     auto_refresh: boolean;
@@ -47,13 +43,16 @@ interface AppConfig {
     proxy: ProxyConfig;
 }
 
-
-
 export default function ApiProxy() {
     const { t } = useTranslation();
 
-
     const models = [
+        {
+            id: 'gemini-3-flash',
+            name: 'Gemini 3 Flash',
+            desc: t('proxy.model.flash_preview'),
+            icon: <Zap size={16} />
+        },
         {
             id: 'gemini-2.5-flash',
             name: 'Gemini 2.5 Flash',
@@ -61,16 +60,16 @@ export default function ApiProxy() {
             icon: <Zap size={16} />
         },
         {
-            id: 'gemini-2.5-flash-thinking',
-            name: 'Gemini 2.5 Flash Thinking',
-            desc: t('proxy.model.flash_thinking'),
-            icon: <BrainCircuit size={16} />
+            id: 'gemini-2.5-flash-lite',
+            name: 'Gemini 2.5 Flash Lite',
+            desc: t('proxy.model.flash_lite'),
+            icon: <Zap size={16} />
         },
         {
-            id: 'gemini-3-pro-low',
-            name: 'Gemini 3 Pro (Low)',
-            desc: t('proxy.model.pro_low'),
-            icon: <Sparkles size={16} />
+            id: 'gemini-2.5-pro',
+            name: 'Gemini 2.5 Pro',
+            desc: t('proxy.model.pro_legacy'),
+            icon: <Cpu size={16} />
         },
         {
             id: 'gemini-3-pro-high',
@@ -79,34 +78,10 @@ export default function ApiProxy() {
             icon: <Cpu size={16} />
         },
         {
-            id: 'gemini-3-pro-image-16x9',
-            name: 'Gemini 3 Pro (16:9)',
-            desc: t('proxy.model.pro_image_16_9'),
-            icon: <ImageIcon size={16} />
-        },
-        {
-            id: 'gemini-3-pro-image-9x16',
-            name: 'Gemini 3 Pro (9:16)',
-            desc: t('proxy.model.pro_image_9_16'),
-            icon: <ImageIcon size={16} />
-        },
-        {
-            id: 'gemini-3-pro-image-4x3',
-            name: 'Gemini 3 Pro (4:3)',
-            desc: t('proxy.model.pro_image_4_3'),
-            icon: <ImageIcon size={16} />
-        },
-        {
-            id: 'gemini-3-pro-image-3x4',
-            name: 'Gemini 3 Pro (3:4)',
-            desc: t('proxy.model.pro_image_3_4'),
-            icon: <ImageIcon size={16} />
-        },
-        {
-            id: 'gemini-3-pro-image-1x1',
-            name: 'Gemini 3 Pro (1:1)',
-            desc: t('proxy.model.pro_image_1_1'),
-            icon: <ImageIcon size={16} />
+            id: 'gemini-3-pro-low',
+            name: 'Gemini 3 Pro (Low)',
+            desc: t('proxy.model.pro_low'),
+            icon: <Cpu size={16} />
         },
         {
             id: 'claude-sonnet-4-5',
@@ -116,15 +91,21 @@ export default function ApiProxy() {
         },
         {
             id: 'claude-sonnet-4-5-thinking',
-            name: 'Claude 4.5 Sonnet Thinking',
+            name: 'Claude 4.5 Sonnet (Thinking)',
             desc: t('proxy.model.claude_sonnet_thinking'),
             icon: <BrainCircuit size={16} />
         },
         {
             id: 'claude-opus-4-5-thinking',
-            name: 'Claude 4.5 Opus Thinking',
+            name: 'Claude 4.5 Opus (Thinking)',
             desc: t('proxy.model.claude_opus_thinking'),
             icon: <BrainCircuit size={16} />
+        },
+        {
+            id: 'gemini-3-pro-image',
+            name: 'Gemini 3 Pro (Image)',
+            desc: t('proxy.model.pro_image_1_1'),
+            icon: <ImageIcon size={16} />
         }
     ];
 
@@ -138,7 +119,7 @@ export default function ApiProxy() {
     const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState('gemini-2.5-flash');
+    const [activeTab, setActiveTab] = useState('gemini-3-flash');
     const [selectedProtocol, setSelectedProtocol] = useState<'openai' | 'anthropic'>('openai');
 
     // 初始化加载
@@ -189,6 +170,31 @@ export default function ApiProxy() {
         saveConfig(newConfig);
     };
 
+    // 专门处理模型映射的热更新
+    const handleMappingUpdate = async (newMapping: Record<string, string>) => {
+        if (!appConfig) return;
+        try {
+            // 1. 调用后端热更新指令
+            await invoke('update_model_mapping', { mapping: newMapping });
+
+            // 2. 更新本地状态 (避免整页重载)
+            const newConfig = {
+                ...appConfig,
+                proxy: {
+                    ...appConfig.proxy,
+                    anthropic_mapping: newMapping
+                }
+            };
+            setAppConfig(newConfig);
+
+            // 可选：显示轻量提示 (Toast) 或仅仅 console
+            console.log('模型映射已热更新');
+        } catch (error) {
+            console.error('更新模型映射失败:', error);
+            alert(t('proxy.dialog.operate_failed', { error }));
+        }
+    };
+
     const handleToggle = async () => {
         if (!appConfig) return;
         setLoading(true);
@@ -231,8 +237,8 @@ export default function ApiProxy() {
         const baseUrl = `http://localhost:${port}`;
         const apiKey = appConfig?.proxy.api_key || 'YOUR_API_KEY';
 
-        // Claude 模型使用 Anthropic 格式
-        if (modelId.startsWith('claude-')) {
+        // 1. Anthropic Protocol (使用 /v1/messages)
+        if (selectedProtocol === 'anthropic') {
             return `curl ${baseUrl}/v1/messages \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${apiKey}" \\
@@ -244,25 +250,26 @@ export default function ApiProxy() {
   }'`;
         }
 
-        // Gemini 图像生成模型
-        if (modelId === 'gemini-3-pro-image') {
+        // 2. OpenAI Protocol (使用 /v1/chat/completions)
+
+        // Gemini 图像生成模型 (OpenAI Format) - 已添加 size 参数
+        if (modelId.startsWith('gemini-3-pro-image')) {
             return `curl ${baseUrl}/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${apiKey}" \\
   -d '{
-    "model": "gemini-3-pro-image",
+    "model": "${modelId}",
+    "size": "1024x1024",
     "messages": [
       {
         "role": "user", 
-        "content": [
-          {"type": "text", "text": "Draw a cute cat"}
-        ]
+        "content": "Draw a cute cat"
       }
     ]
   }'`;
         }
 
-        // 其他 Gemini 模型使用 OpenAI 格式
+        // 标准文本模型 (OpenAI Format) - 无论是 Gemini 还是 Claude
         return `curl ${baseUrl}/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${apiKey}" \\
@@ -277,15 +284,16 @@ export default function ApiProxy() {
         const baseUrl = `http://localhost:${port}/v1`;
         const apiKey = appConfig?.proxy.api_key || 'YOUR_API_KEY';
 
-        // Claude 模型使用 Anthropic SDK
-        if (modelId.startsWith('claude-')) {
+        // 1. Anthropic Protocol (使用 Anthropic SDK)
+        if (selectedProtocol === 'anthropic') {
             return `from anthropic import Anthropic
 
 client = Anthropic(
-    base_url="${baseUrl}",
+    base_url="${`http://localhost:${port}`}",
     api_key="${apiKey}"
 )
 
+# 注意: Antigravity 支持使用 Anthropic SDK 调用任意模型(包括 Gemini)
 response = client.messages.create(
     model="${modelId}",
     max_tokens=1024,
@@ -295,8 +303,10 @@ response = client.messages.create(
 print(response.content[0].text)`;
         }
 
-        // Gemini 图像生成模型
-        if (modelId === 'gemini-3-pro-image') {
+        // 2. OpenAI Protocol (使用 OpenAI SDK)
+
+        // Gemini 图像生成模型 - 已添加 extra_body size 参数
+        if (modelId.startsWith('gemini-3-pro-image')) {
             return `from openai import OpenAI
 
 client = OpenAI(
@@ -305,19 +315,18 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gemini-3-pro-image",
+    model="${modelId}",
+    extra_body={ "size": "1024x1024" },
     messages=[{
         "role": "user",
-        "content": [
-            {"type": "text", "text": "Draw a futuristic city"}
-        ]
+        "content": "Draw a futuristic city"
     }]
 )
 
 print(response.choices[0].message.content)`;
         }
 
-        // 其他 Gemini 模型使用 OpenAI SDK
+        // 标准文本模型 (Gemini 或 Claude)
         return `from openai import OpenAI
 
 client = OpenAI(
@@ -332,6 +341,18 @@ response = client.chat.completions.create(
 
 print(response.choices[0].message.content)`;
     };
+
+    // 在 filter 逻辑中，当选择 openai 协议时，允许显示所有模型
+    const filteredModels = models.filter(model => {
+        if (selectedProtocol === 'openai') {
+            return true;
+        }
+        // Anthropic 协议下隐藏不支持的图片模型
+        if (selectedProtocol === 'anthropic') {
+            return !model.id.includes('image');
+        }
+        return true;
+    });
 
     return (
         <div className="h-full w-full overflow-y-auto">
@@ -447,7 +468,7 @@ print(response.choices[0].message.content)`;
                                 </label>
                                 <div className="flex gap-2">
                                     <input
-                                        type="text" // 改为 text 以便复制，或者可以保留 password 点击显示
+                                        type="text"
                                         value={appConfig.proxy.api_key}
                                         readOnly
                                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-base-200 rounded-lg bg-gray-50 dark:bg-base-300 text-gray-600 dark:text-gray-400 font-mono"
@@ -513,22 +534,24 @@ print(response.choices[0].message.content)`;
                                             </label>
                                             <select
                                                 className="select select-sm select-bordered w-full font-mono text-xs bg-white dark:bg-base-100"
-                                                value={appConfig.proxy.anthropic_mapping?.["claude-sonnet-4-5-20250929"] || "gemini-3-pro-high"}
+                                                value={appConfig.proxy.anthropic_mapping?.["claude-sonnet-4-5-20250929"] || "claude-sonnet-4-5-thinking"}
                                                 onChange={(e) => {
                                                     const newMapping = {
                                                         ...(appConfig.proxy.anthropic_mapping || {}),
                                                         "claude-sonnet-4-5-20250929": e.target.value
                                                     };
-                                                    updateProxyConfig({ anthropic_mapping: newMapping });
+                                                    handleMappingUpdate(newMapping);
                                                 }}
                                             >
-                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash', '极速响应')}</option>
-                                                <option value="gemini-2.5-flash-thinking">gemini-2.5-flash-thinking - {t('proxy.models.flash_thinking', '思考能力')}</option>
-                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high', '最强推理')}</option>
-                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low', '低配额')}</option>
-                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet', '代码推理')}</option>
-                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking', '思维链')}</option>
-                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking', '最强思维')}</option>
+                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high')}</option>
+                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low')}</option>
+                                                <option value="gemini-3-flash">gemini-3-flash - {t('proxy.models.flash_preview')}</option>
+                                                <option value="gemini-2.5-pro">gemini-2.5-pro - {t('proxy.models.pro_legacy')}</option>
+                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash')}</option>
+                                                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite - {t('proxy.models.flash_lite')}</option>
+                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet')}</option>
+                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking')}</option>
+                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -549,22 +572,24 @@ print(response.choices[0].message.content)`;
                                             </label>
                                             <select
                                                 className="select select-sm select-bordered w-full font-mono text-xs bg-white dark:bg-base-100"
-                                                value={appConfig.proxy.anthropic_mapping?.["opus"] || "gemini-3-pro-high"}
+                                                value={appConfig.proxy.anthropic_mapping?.["opus"] || "claude-opus-4-5-thinking"}
                                                 onChange={(e) => {
                                                     const newMapping = {
                                                         ...(appConfig.proxy.anthropic_mapping || {}),
                                                         "opus": e.target.value
                                                     };
-                                                    updateProxyConfig({ anthropic_mapping: newMapping });
+                                                    handleMappingUpdate(newMapping);
                                                 }}
                                             >
-                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash', '极速响应')}</option>
-                                                <option value="gemini-2.5-flash-thinking">gemini-2.5-flash-thinking - {t('proxy.models.flash_thinking', '思考能力')}</option>
-                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high', '最强推理')}</option>
-                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low', '低配额')}</option>
-                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet', '代码推理')}</option>
-                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking', '思维链')}</option>
-                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking', '最强思维')}</option>
+                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high')}</option>
+                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low')}</option>
+                                                <option value="gemini-3-flash">gemini-3-flash - {t('proxy.models.flash_preview')}</option>
+                                                <option value="gemini-2.5-pro">gemini-2.5-pro - {t('proxy.models.pro_legacy')}</option>
+                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash')}</option>
+                                                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite - {t('proxy.models.flash_lite')}</option>
+                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet')}</option>
+                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking')}</option>
+                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -591,16 +616,18 @@ print(response.choices[0].message.content)`;
                                                         ...(appConfig.proxy.anthropic_mapping || {}),
                                                         "claude-haiku-4-5-20251001": e.target.value
                                                     };
-                                                    updateProxyConfig({ anthropic_mapping: newMapping });
+                                                    handleMappingUpdate(newMapping);
                                                 }}
                                             >
-                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash', '极速响应')}</option>
-                                                <option value="gemini-2.5-flash-thinking">gemini-2.5-flash-thinking - {t('proxy.models.flash_thinking', '思考能力')}</option>
-                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high', '最强推理')}</option>
-                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low', '低配额')}</option>
-                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet', '代码推理')}</option>
-                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking', '思维链')}</option>
-                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking', '最强思维')}</option>
+                                                <option value="gemini-3-pro-high">gemini-3-pro-high - {t('proxy.models.pro_high')}</option>
+                                                <option value="gemini-3-pro-low">gemini-3-pro-low - {t('proxy.models.pro_low')}</option>
+                                                <option value="gemini-3-flash">gemini-3-flash - {t('proxy.models.flash_preview')}</option>
+                                                <option value="gemini-2.5-pro">gemini-2.5-pro - {t('proxy.models.pro_legacy')}</option>
+                                                <option value="gemini-2.5-flash">gemini-2.5-flash - {t('proxy.models.flash')}</option>
+                                                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite - {t('proxy.models.flash_lite')}</option>
+                                                <option value="claude-sonnet-4-5">claude-sonnet-4-5 - {t('proxy.models.sonnet')}</option>
+                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking - {t('proxy.models.sonnet_thinking')}</option>
+                                                <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking - {t('proxy.models.opus_thinking')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -612,23 +639,15 @@ print(response.choices[0].message.content)`;
                                         className="btn btn-xs btn-outline"
                                         onClick={() => {
                                             const newMapping = {
-                                                "claude-sonnet-4-5-20250929": "gemini-3-pro-high",
-                                                "opus": "gemini-3-pro-high",
+                                                "claude-sonnet-4-5-20250929": "claude-sonnet-4-5-thinking",
+                                                "opus": "claude-opus-4-5-thinking",
                                                 "claude-haiku-4-5-20251001": "gemini-2.5-flash"
                                             };
-                                            updateProxyConfig({ anthropic_mapping: newMapping });
+                                            handleMappingUpdate(newMapping);
                                         }}
                                     >
                                         <Sparkles size={12} className="mr-1" />
-                                        {t('proxy.mapping.apply_recommended', 'Apply Recommended')}
-                                    </button>
-                                    <button
-                                        className="btn btn-xs btn-ghost text-gray-500"
-                                        onClick={() => {
-                                            updateProxyConfig({ anthropic_mapping: {} });
-                                        }}
-                                    >
-                                        {t('proxy.mapping.reset_all', 'Reset All')}
+                                        {t('proxy.mapping.restore_defaults', 'Restore Default Configuration')}
                                     </button>
                                 </div>
                             </div>
@@ -753,30 +772,20 @@ print(response.choices[0].message.content)`;
 
                         {/* Tabs */}
                         <div className="flex border-b border-gray-100 dark:border-base-200 overflow-x-auto">
-                            {models
-                                .filter(model => {
-                                    // OpenAI 协议显示 Gemini 模型
-                                    if (selectedProtocol === 'openai') {
-                                        return model.id.startsWith('gemini-');
-                                    }
-                                    // Anthropic 协议显示 Claude 模型
-                                    return model.id.startsWith('claude-');
-                                })
-                                .map((model) => (
-                                    <button
-                                        key={model.id}
-                                        onClick={() => setActiveTab(model.id)}
-                                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === model.id
-                                            ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-base-200'
-                                            }`}
-                                    >
-                                        {model.icon}
-                                        {model.name}
-                                        <span className="text-xs opacity-60 ml-1">({model.desc})</span>
-                                    </button>
-                                ))
-                            }
+                            {filteredModels.map((model) => (
+                                <button
+                                    key={model.id}
+                                    onClick={() => setActiveTab(model.id)}
+                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === model.id
+                                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-base-200'
+                                        }`}
+                                >
+                                    {model.icon}
+                                    {model.name}
+                                    <span className="text-xs opacity-60 ml-1">({model.desc})</span>
+                                </button>
+                            ))}
                         </div>
 
                         <div className="p-4 space-y-4">

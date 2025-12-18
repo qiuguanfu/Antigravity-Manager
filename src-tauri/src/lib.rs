@@ -105,6 +105,7 @@ pub fn run() {
             commands::proxy::get_proxy_stats,
             commands::proxy::generate_api_key,
             commands::proxy::reload_proxy_accounts,
+            commands::proxy::update_model_mapping,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

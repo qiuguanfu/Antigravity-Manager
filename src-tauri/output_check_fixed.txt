@@ -1,192 +1,0 @@
-[1m[96m Downloading[0m 1 crate                                                          [1m[96m Downloading[0m 2 crates                                                         [1m[96m Downloading[0m 3 crates                                                         [1m[96m Downloading[0m 4 crates                                                         [1m[96m Downloading[0m 5 crates                                                         [1m[96m Downloading[0m 6 crates                                                         [1m[96m Downloading[0m 7 crates                                                         [1m[96m Downloading[0m 8 crates                                                         [1m[96m Downloading[0m 9 crates                                                         [1m[96m Downloading[0m 10 crates                                                        [1m[96m Downloading[0m 11 crates                                                        [1m[96m Downloading[0m 12 crates                                                        [1m[96m Downloading[0m 13 crates                                                        [1m[96m Downloading[0m 14 crates                                                        [1m[96m Downloading[0m 15 crates                                                        [1m[96m Downloading[0m 16 crates                                                        [1m[96m Downloading[0m 17 crates                                                        [1m[96m Downloading[0m 18 crates                                                        [1m[96m Downloading[0m 19 crates                                                        [1m[96m Downloading[0m 20 crates                                                        [1m[96m Downloading[0m 21 crates                                                        [1m[96m Downloading[0m 22 crates                                                        [1m[96m Downloading[0m 23 crates                                                        [1m[96m Downloading[0m 24 crates                                                        [1m[96m Downloading[0m 25 crates                                                        [1m[96m Downloading[0m 26 crates                                                        [1m[96m Downloading[0m 27 crates                                                        [1m[96m Downloading[0m 28 crates                                                        [1m[96m Downloading[0m 29 crates                                                        [1m[96m Downloading[0m 30 crates                                                        [1m[96m Downloading[0m 31 crates                                                        [1m[96m Downloading[0m 32 crates                                                        [1m[96m Downloading[0m 33 crates                                                        [1m[96m Downloading[0m 34 crates                                                        [1m[96m Downloading[0m 35 crates                                                        [1m[96m Downloading[0m 36 crates                                                        [1m[96m Downloading[0m 37 crates                                                        [1m[96m Downloading[0m 38 crates                                                        [1m[96m Downloading[0m 39 crates                                                        [1m[96m Downloading[0m 40 crates                                                        [1m[96m Downloading[0m 41 crates                                                        [1m[96m Downloading[0m 42 crates                                                        [1m[96m Downloading[0m 43 crates                                                        [1m[96m Downloading[0m 44 crates                                                        [1m[96m Downloading[0m 45 crates                                                        [1m[96m Downloading[0m 46 crates                                                        [1m[96m Downloading[0m 47 crates                                                        [1m[96m Downloading[0m 48 crates                                                        [1m[96m Downloading[0m 49 crates                                                        [1m[96m Downloading[0m 50 crates                                                        [1m[96m Downloading[0m 51 crates                                                        [1m[96m Downloading[0m 52 crates                                                        [1m[96m Downloading[0m 53 crates                                                        [1m[96m Downloading[0m 54 crates                                                        [1m[96m Downloading[0m 55 crates                                                        [1m[96m Downloading[0m 56 crates                                                        [1m[96m Downloading[0m 57 crates                                                        [1m[96m Downloading[0m 58 crates                                                        [1m[96m Downloading[0m 59 crates                                                        [K[1m[92m  Downloaded[0m as-slice v0.2.1
-[1m[96m Downloading[0m 58 crates                                                        [1m[96m Downloading[0m 58 crates, remaining bytes: 998B                                 [K[1m[92m  Downloaded[0m aligned-vec v0.6.4
-[1m[96m Downloading[0m 57 crates, remaining bytes: 9.9KiB                               [K[1m[92m  Downloaded[0m aligned v0.4.2
-[1m[96m Downloading[0m 56 crates, remaining bytes: 9.9KiB                               [K[1m[92m  Downloaded[0m bit_field v0.10.3
-[1m[96m Downloading[0m 55 crates, remaining bytes: 4.5KiB                               [K[1m[92m  Downloaded[0m avif-serialize v0.8.6
-[1m[96m Downloading[0m 54 crates, remaining bytes: 451.5KiB                             [1m[96m Downloading[0m 54 crates, remaining bytes: 443.5KiB                             [1m[96m Downloading[0m 54 crates, remaining bytes: 427.5KiB                             [1m[96m Downloading[0m 54 crates, remaining bytes: 356.6KiB                             [K[1m[92m  Downloaded[0m arg_enum_proc_macro v0.3.4
-[1m[96m Downloading[0m 53 crates, remaining bytes: 340.8KiB                             [1m[96m Downloading[0m 53 crates, remaining bytes: 298.1KiB                             [K[1m[92m  Downloaded[0m av1-grain v0.2.5
-[1m[96m Downloading[0m 52 crates, remaining bytes: 313.1KiB                             [K[1m[92m  Downloaded[0m arrayvec v0.7.6
-[1m[96m Downloading[0m 51 crates, remaining bytes: 233.1KiB                             [K[1m[92m  Downloaded[0m built v0.8.0
-[1m[96m Downloading[0m 50 crates, remaining bytes: 217.1KiB                             [K[1m[92m  Downloaded[0m bitstream-io v4.9.0
-[1m[96m Downloading[0m 49 crates, remaining bytes: 153.2KiB                             [K[1m[92m  Downloaded[0m av-scenechange v0.14.1
-[1m[96m Downloading[0m 48 crates, extracting av-scenechange ...                         [K[1m[92m  Downloaded[0m num-integer v0.1.46
-[1m[96m Downloading[0m 47 crates, remaining bytes: 235.1KiB                             [K[1m[92m  Downloaded[0m maybe-rayon v0.1.1
-[1m[96m Downloading[0m 46 crates, remaining bytes: 219.1KiB                             [K[1m[92m  Downloaded[0m equator v0.4.2
-[1m[96m Downloading[0m 45 crates, remaining bytes: 53.8KiB                              [K[1m[92m  Downloaded[0m exr v1.74.0
-[1m[96m Downloading[0m 44 crates                                                        [K[1m[92m  Downloaded[0m bumpalo v3.19.0
-[1m[96m Downloading[0m 43 crates                                                        [K[1m[92m  Downloaded[0m equator-macro v0.4.2
-[1m[96m Downloading[0m 42 crates, remaining bytes: 12.2KiB                              [K[1m[92m  Downloaded[0m core2 v0.4.0
-[1m[96m Downloading[0m 41 crates, remaining bytes: 6.5KiB                               [K[1m[92m  Downloaded[0m noop_proc_macro v0.3.0
-[1m[96m Downloading[0m 40 crates                                                        [K[1m[92m  Downloaded[0m color_quant v1.1.0
-[1m[96m Downloading[0m 39 crates                                                        [K[1m[92m  Downloaded[0m half v2.7.1
-[1m[96m Downloading[0m 38 crates, remaining bytes: 37.7KiB                              [K[1m[92m  Downloaded[0m jobserver v0.1.34
-[1m[96m Downloading[0m 37 crates, remaining bytes: 162.8KiB                             [K[1m[92m  Downloaded[0m gif v0.14.1
-[1m[96m Downloading[0m 36 crates, remaining bytes: 141.1KiB                             [K[1m[92m  Downloaded[0m fax_derive v0.2.0
-[1m[96m Downloading[0m 35 crates, remaining bytes: 141.1KiB                             [K[1m[92m  Downloaded[0m fax v0.2.6
-[1m[96m Downloading[0m 34 crates, remaining bytes: 221.2KiB                             [K[1m[92m  Downloaded[0m itertools v0.14.0
-[1m[96m Downloading[0m 33 crates, remaining bytes: 83.0KiB                              [K[1m[92m  Downloaded[0m pastey v0.1.1
-[1m[96m Downloading[0m 32 crates, remaining bytes: 67.0KiB                              [K[1m[92m  Downloaded[0m nom v8.0.0
-[1m[96m Downloading[0m 31 crates, remaining bytes: 44.8KiB                              [K[1m[92m  Downloaded[0m lebe v0.5.3
-[1m[96m Downloading[0m 30 crates, remaining bytes: 64.8KiB                              [K[1m[92m  Downloaded[0m image-webp v0.2.4
-[1m[96m Downloading[0m 29 crates, remaining bytes: 64.8KiB                              [K[1m[92m  Downloaded[0m imgref v1.12.0
-[1m[96m Downloading[0m 28 crates                                                        [K[1m[92m  Downloaded[0m num-rational v0.4.2
-[1m[96m Downloading[0m 27 crates                                                        [K[1m[92m  Downloaded[0m num-derive v0.4.2
-[1m[96m Downloading[0m 26 crates                                                        [K[1m[92m  Downloaded[0m profiling-procmacros v1.0.17
-[1m[96m Downloading[0m 25 crates, remaining bytes: 13.2KiB                              [K[1m[92m  Downloaded[0m profiling v1.0.17
-[1m[96m Downloading[0m 24 crates                                                        [K[1m[92m  Downloaded[0m paste v1.0.15
-[1m[96m Downloading[0m 23 crates, remaining bytes: 93.1KiB                              [K[1m[92m  Downloaded[0m loop9 v0.1.5
-[1m[96m Downloading[0m 22 crates, remaining bytes: 36.4KiB                              [K[1m[92m  Downloaded[0m num-bigint v0.4.6
-[1m[96m Downloading[0m 21 crates                                                        [K[1m[92m  Downloaded[0m y4m v0.8.0
-[1m[96m Downloading[0m 20 crates, remaining bytes: 46.2KiB                              [K[1m[92m  Downloaded[0m quick-error v2.0.1
-[1m[96m Downloading[0m 19 crates, remaining bytes: 65.4KiB                              [K[1m[92m  Downloaded[0m qoi v0.4.1
-[1m[96m Downloading[0m 18 crates, remaining bytes: 65.4KiB                              [K[1m[92m  Downloaded[0m zerocopy-derive v0.8.31
-[1m[96m Downloading[0m 17 crates, remaining bytes: 59.4KiB                              [K[1m[92m  Downloaded[0m zune-jpeg v0.4.21
-[1m[96m Downloading[0m 16 crates, remaining bytes: 21.0KiB                              [K[1m[92m  Downloaded[0m zune-inflate v0.2.54
-[1m[96m Downloading[0m 15 crates, remaining bytes: 1.4MiB                               [K[1m[92m  Downloaded[0m weezl v0.1.12
-[1m[96m Downloading[0m 14 crates, remaining bytes: 2.8MiB                               [K[1m[92m  Downloaded[0m simd_helpers v0.1.0
-[1m[96m Downloading[0m 13 crates, remaining bytes: 2.8MiB                               [K[1m[92m  Downloaded[0m ravif v0.12.0
-[1m[96m Downloading[0m 12 crates, remaining bytes: 2.7MiB                               [K[1m[92m  Downloaded[0m zune-core v0.4.12
-[1m[96m Downloading[0m 11 crates, remaining bytes: 2.7MiB                               [K[1m[92m  Downloaded[0m rgb v0.8.52
-[1m[96m Downloading[0m 10 crates, remaining bytes: 2.6MiB                               [K[1m[92m  Downloaded[0m v_frame v0.3.9
-[1m[96m Downloading[0m 9 crates, remaining bytes: 2.7MiB                                [K[1m[92m  Downloaded[0m zune-core v0.5.0
-[1m[96m Downloading[0m 8 crates, remaining bytes: 2.6MiB                                [K[1m[92m  Downloaded[0m wasm-bindgen-shared v0.2.106
-[1m[96m Downloading[0m 7 crates, remaining bytes: 2.6MiB                                [K[1m[92m  Downloaded[0m rustversion v1.0.22
-[1m[96m Downloading[0m 6 crates, remaining bytes: 2.6MiB                                [K[1m[92m  Downloaded[0m wasm-bindgen-macro-support v0.2.106
-[1m[96m Downloading[0m 5 crates, remaining bytes: 2.5MiB                                [K[1m[92m  Downloaded[0m wasm-bindgen v0.2.106
-[1m[96m Downloading[0m 4 crates, remaining bytes: 2.5MiB                                [K[1m[92m  Downloaded[0m wasm-bindgen-macro v0.2.106
-[1m[96m Downloading[0m 3 crates, remaining bytes: 2.4MiB                                [K[1m[92m  Downloaded[0m zune-jpeg v0.5.7
-[1m[96m Downloading[0m 2 crates, remaining bytes: 2.4MiB                                [1m[96m Downloading[0m 2 crates, remaining bytes: 1.3MiB                                [1m[96m Downloading[0m 2 crates, remaining bytes: 184.7KiB                              [K[1m[92m  Downloaded[0m tiff v0.10.3
-[1m[96m Downloading[0m 1 crate, extracting tiff ...                                     [K[1m[92m  Downloaded[0m rav1e v0.8.1
-[1m[96m Downloading[0m 0 crates, extracting rav1e ...                                   [K[1m[92m  Downloaded[0m 59 crates (5.2MiB) in 2.88s (largest was `rav1e` at 1.4MiB)
-[1m[92m   Compiling[0m zerocopy v0.8.31
-[1m[92m   Compiling[0m num-traits v0.2.19
-[1m[92m   Compiling[0m zerocopy-derive v0.8.31
-[1m[92m   Compiling[0m equator-macro v0.4.2
-[1m[92m    Checking[0m either v1.15.0
-[1m[92m    Checking[0m arrayvec v0.7.6
-[1m[92m    Checking[0m as-slice v0.2.1
-[1m[92m   Compiling[0m built v0.8.0
-[1m[92m   Compiling[0m paste v1.0.15
-[1m[96m    Building[0m [============>            ] 339/617: equator-macro, paste(buil...[K[1m[92m   Compiling[0m av-scenechange v0.14.1
-[1m[96m    Building[0m [============>            ] 340/617: equator-macro, paste(buil...[K[1m[92m    Checking[0m rayon v1.11.0
-[1m[96m    Building[0m [============>            ] 341/617: equator-macro, paste(buil...[1m[96m    Building[0m [============>            ] 342/617: equator-macro, paste(buil...[K[1m[92m    Checking[0m aligned v0.4.2
-[1m[96m    Building[0m [============>            ] 345/617: equator-macro, paste(buil...[K[1m[92m    Checking[0m core2 v0.4.0
-[1m[96m    Building[0m [=============>           ] 364/617: equator-macro, paste(buil...[K[1m[92m    Checking[0m nom v8.0.0
-[1m[96m    Building[0m [=============>           ] 365/617: equator-macro, paste(buil...[1m[96m    Building[0m [=============>           ] 366/617: equator-macro, paste(buil...[1m[96m    Building[0m [=============>           ] 369/617: equator-macro, nom, zeroc...[K[1m[92m    Checking[0m equator v0.4.2
-[1m[96m    Building[0m [=============>           ] 370/617: nom, zerocopy-derive, av-...[K[1m[92m   Compiling[0m rav1e v0.8.1
-[1m[96m    Building[0m [==============>          ] 371/617: nom, zerocopy-derive, av-...[K[1m[92m   Compiling[0m arg_enum_proc_macro v0.3.4
-[1m[96m    Building[0m [==============>          ] 372/617: nom, zerocopy-derive, av-...[K[1m[92m   Compiling[0m profiling-procmacros v1.0.17
-[1m[96m    Building[0m [==============>          ] 374/617: nom, zerocopy-derive, pas...[K[1m[92m    Checking[0m y4m v0.8.0
-[1m[96m    Building[0m [==============>          ] 380/617: nom, zerocopy-derive, pas...[K[1m[92m   Compiling[0m pastey v0.1.1
-[1m[96m    Building[0m [==============>          ] 383/617: nom, pastey, paste(build)...[K[1m[92m    Checking[0m quick-error v2.0.1
-[1m[96m    Building[0m [==============>          ] 384/617: nom, pastey, paste(build)...[K[1m[92m    Checking[0m profiling v1.0.17
-[1m[96m    Building[0m [==============>          ] 389/617: nom, pastey, paste(build)...[1m[96m    Building[0m [==============>          ] 390/617: rav1e(build), nom, pastey...[1m[96m    Building[0m [==============>          ] 391/617: rav1e(build), nom, pastey...[K[1m[92m    Checking[0m bitstream-io v4.9.0
-[1m[96m    Building[0m [==============>          ] 392/617: rav1e(build), nom, zeroco...[K[1m[92m   Compiling[0m ppv-lite86 v0.2.21
-[1m[96m    Building[0m [==============>          ] 393/617: rav1e(build), nom, zeroco...[K[1m[92m    Checking[0m maybe-rayon v0.1.1
-[1m[96m    Building[0m [==============>          ] 394/617: rav1e(build), nom, maybe-...[K[1m[92m    Checking[0m itertools v0.14.0
-[1m[96m    Building[0m [===============>         ] 405/617: rav1e(build), nom, zeroco...[K[1m[92m   Compiling[0m rand_chacha v0.3.1
-[1m[96m    Building[0m [===============>         ] 406/617: rav1e(build), nom, zeroco...[K[1m[92m   Compiling[0m rand_chacha v0.2.2
-[1m[96m    Building[0m [===============>         ] 407/617: rav1e(build), nom, rand_c...[K[1m[92m   Compiling[0m rand v0.8.5
-[1m[96m    Building[0m [===============>         ] 408/617: rav1e(build), nom, rand_c...[K[1m[92m   Compiling[0m rand v0.7.3
-[1m[96m    Building[0m [===============>         ] 409/617: rand, rav1e(build), nom, ...[1m[96m    Building[0m [===============>         ] 410/617: rand, rav1e(build), num-t...[1m[96m    Building[0m [===============>         ] 411/617: rand, rav1e(build), num-t...[K[1m[92m   Compiling[0m num-derive v0.4.2
-[1m[96m    Building[0m [===============>         ] 415/617: rand, rav1e(build), num-t...[K[1m[92m   Compiling[0m phf_generator v0.11.3
-[1m[96m    Building[0m [===============>         ] 416/617: rand, rav1e(build), phf_g...[K[1m[92m   Compiling[0m phf_codegen v0.11.3
-[1m[96m    Building[0m [===============>         ] 417/617: rand, rav1e(build), phf_g...[K[1m[92m   Compiling[0m string_cache_codegen v0.5.4
-[1m[96m    Building[0m [===============>         ] 418/617: rav1e(build), phf_generat...[K[1m[92m   Compiling[0m phf_macros v0.11.3
-[1m[96m    Building[0m [===============>         ] 419/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m phf_generator v0.8.0
-[1m[96m    Building[0m [================>        ] 420/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m phf_generator v0.10.0
-[1m[96m    Building[0m [================>        ] 421/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m phf_codegen v0.8.0
-[1m[96m    Building[0m [================>        ] 422/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m phf_macros v0.10.0
-[1m[96m    Building[0m [================>        ] 423/617: rav1e(build), string_cach...[K[1m[92m    Checking[0m num-integer v0.1.46
-[1m[96m    Building[0m [================>        ] 424/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m selectors v0.24.0
-[1m[96m    Building[0m [================>        ] 425/617: rav1e(build), string_cach...[K[1m[92m    Checking[0m num-bigint v0.4.6
-[1m[96m    Building[0m [================>        ] 426/617: rav1e(build), string_cach...[K[1m[92m   Compiling[0m markup5ever v0.14.1
-[1m[96m    Building[0m [================>        ] 427/617: rav1e(build), markup5ever...[K[1m[92m    Checking[0m aligned-vec v0.6.4
-[1m[96m    Building[0m [================>        ] 428/617: rav1e(build), markup5ever...[K[1m[92m   Compiling[0m fax_derive v0.2.0
-[1m[96m    Building[0m [================>        ] 429/617: rav1e(build), markup5ever...[K[1m[92m    Checking[0m v_frame v0.3.9
-[1m[96m    Building[0m [================>        ] 430/617: rav1e(build), markup5ever...[K[1m[92m   Compiling[0m phf v0.11.3
-[1m[96m    Building[0m [================>        ] 431/617: rav1e(build), markup5ever...[1m[96m    Building[0m [================>        ] 432/617: rav1e(build), markup5ever...[1m[96m    Building[0m [================>        ] 433/617: rav1e(build), markup5ever...[1m[96m    Building[0m [================>        ] 434/617: rav1e(build), phf, phf, p...[K[1m[92m   Compiling[0m simd_helpers v0.1.0
-[1m[96m    Building[0m [================>        ] 436/617: rav1e(build), simd_helper...[K[1m[92m   Compiling[0m phf v0.10.1
-[1m[96m    Building[0m [================>        ] 437/617: rav1e(build), simd_helper...[K[1m[92m    Checking[0m imgref v1.12.0
-[1m[96m    Building[0m [================>        ] 440/617: imgref, rav1e(build), sim...[K[1m[92m    Checking[0m weezl v0.1.12
-[1m[96m    Building[0m [================>        ] 441/617: imgref, rav1e(build), phf...[K[1m[92m   Compiling[0m noop_proc_macro v0.3.0
-[1m[96m    Building[0m [=================>       ] 445/617: rav1e(build), phf, phf, p...[K[1m[92m    Checking[0m zune-core v0.4.12
-[1m[96m    Building[0m [=================>       ] 449/617: rav1e(build), phf, phf, p...[K[1m[92m    Checking[0m num-rational v0.4.2
-[1m[96m    Building[0m [=================>       ] 450/617: rav1e(build), phf, phf, p...[K[1m[92m    Checking[0m new_debug_unreachable v1.0.6
-[1m[96m    Building[0m [=================>       ] 452/617: rav1e(build), phf, phf, p...[K[1m[92m    Checking[0m loop9 v0.1.5
-[1m[96m    Building[0m [=================>       ] 458/617: loop9, rav1e(build), phf,...[K[1m[92m    Checking[0m zune-jpeg v0.4.21
-[1m[96m    Building[0m [=================>       ] 459/617: loop9, rav1e(build), phf,...[K[1m[92m    Checking[0m fax v0.2.6
-[1m[96m    Building[0m [=================>       ] 460/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m av1-grain v0.2.5
-[1m[96m    Building[0m [=================>       ] 461/617: rav1e(build), phf, phf, f...[1m[96m    Building[0m [=================>       ] 462/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m pxfm v0.1.27
-[1m[96m    Building[0m [=================>       ] 464/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m avif-serialize v0.8.6
-[1m[96m    Building[0m [=================>       ] 468/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m zune-inflate v0.2.54
-[1m[96m    Building[0m [==================>      ] 469/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m bit_field v0.10.3
-[1m[96m    Building[0m [==================>      ] 475/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m zune-core v0.5.0
-[1m[96m    Building[0m [==================>      ] 476/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m lebe v0.5.3
-[1m[96m    Building[0m [==================>      ] 478/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m rgb v0.8.52
-[1m[96m    Building[0m [==================>      ] 480/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m color_quant v1.1.0
-[1m[96m    Building[0m [==================>      ] 481/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m half v2.7.1
-[1m[96m    Building[0m [==================>      ] 482/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m image-webp v0.2.4
-[1m[96m    Building[0m [==================>      ] 489/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m gif v0.14.1
-[1m[96m    Building[0m [==================>      ] 491/617: rav1e(build), phf, phf, f...[K[1m[92m    Checking[0m exr v1.74.0
-[1m[96m    Building[0m [==================>      ] 492/617: exr, rav1e(build), phf, p...[K[1m[92m    Checking[0m qoi v0.4.1
-[1m[96m    Building[0m [==================>      ] 493/617: exr, rav1e(build), qoi, p...[K[1m[92m    Checking[0m tauri-utils v2.8.1
-[1m[96m    Building[0m [===================>     ] 494/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m zune-jpeg v0.5.7
-[1m[96m    Building[0m [===================>     ] 495/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m moxcms v0.7.11
-[1m[96m    Building[0m [===================>     ] 497/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m ahash v0.8.12
-[1m[96m    Building[0m [====================>    ] 537/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m hashbrown v0.14.5
-[1m[92m    Checking[0m chrono v0.4.42
-[1m[96m    Building[0m [======================>  ] 571/617: exr, rav1e(build), tauri-...[1m[96m    Building[0m [======================>  ] 572/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m hashlink v0.9.1
-[1m[96m    Building[0m [======================>  ] 573/617: exr, rav1e(build), tauri-...[K[1m[92m   Compiling[0m cssparser v0.29.6
-[1m[96m    Building[0m [======================>  ] 574/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m rusqlite v0.32.1
-[1m[96m    Building[0m [======================>  ] 575/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m sysinfo v0.31.4
-[1m[96m    Building[0m [======================>  ] 577/617: exr, rav1e(build), tauri-...[1m[96m    Building[0m [======================>  ] 578/617: exr, rav1e(build), tauri-...[K[1m[92m   Compiling[0m html5ever v0.29.1
-[1m[96m    Building[0m [======================>  ] 579/617: exr, rav1e(build), tauri-...[K[1m[92m    Checking[0m tiff v0.10.3
-[1m[96m    Building[0m [======================>  ] 580/617: exr, tiff, rav1e(build), ...[1m[96m    Building[0m [======================>  ] 581/617: exr, tiff, rav1e(build), ...[1m[96m    Building[0m [======================>  ] 582/617: exr, tiff, tauri-utils, s...[1m[96m    Building[0m [======================>  ] 583/617: tiff, tauri-utils, select...[1m[96m    Building[0m [======================>  ] 584/617: tiff, tauri-utils, select...[1m[96m    Building[0m [======================>  ] 585/617: tiff, tauri-utils, html5e...[K[1m[92m   Compiling[0m kuchikiki v0.8.8-speedreader
-[1m[96m    Building[0m [======================>  ] 585/617: tiff, tauri-utils, html5e...[1m[96m    Building[0m [======================>  ] 586/617: tauri-utils, html5ever, m...[1m[96m    Building[0m [======================>  ] 587/617: tauri-utils, moxcms, kuch...[1m[96m    Building[0m [======================>  ] 587/617: tauri-utils, tauri-utils,...[1m[96m    Building[0m [======================>  ] 588/617: tauri-utils, tauri-utils,...[1m[96m    Building[0m [======================>  ] 589/617: tauri-utils, tauri-utils,...[1m[96m    Building[0m [======================>  ] 590/617: tauri-utils, tauri-utils,...[K[1m[92m    Checking[0m tauri-runtime v2.9.2
-[1m[96m    Building[0m [======================>  ] 591/617: tauri-utils, tauri-runtim...[K[1m[92m    Checking[0m tauri-runtime-wry v2.9.3
-[1m[96m    Building[0m [======================>  ] 592/617: tauri-runtime-wry, tauri-...[1m[96m    Building[0m [=======================> ] 593/617: tauri-utils, rav1e          [K[1m[92m   Compiling[0m tauri-build v2.5.3
-[1m[92m   Compiling[0m tauri-plugin v2.5.2
-[1m[92m   Compiling[0m tauri-codegen v2.5.2
-[1m[96m    Building[0m [=======================> ] 593/617: tauri-codegen, tauri-buil...[K[1m[92m    Checking[0m ravif v0.12.0
-[1m[96m    Building[0m [=======================> ] 594/617: tauri-codegen, tauri-buil...[K[1m[92m    Checking[0m image v0.25.9
-[1m[96m    Building[0m [=======================> ] 595/617: tauri-codegen, tauri-buil...[1m[96m    Building[0m [=======================> ] 596/617: tauri-codegen, tauri-buil...[1m[96m    Building[0m [=======================> ] 597/617: tauri-codegen, image, tau...[1m[96m    Building[0m [=======================> ] 598/617: image, tauri-utils          [K[1m[92m   Compiling[0m tauri v2.9.5
-[1m[92m   Compiling[0m tauri-plugin-fs v2.4.4
-[1m[92m   Compiling[0m tauri-macros v2.5.2
-[1m[92m   Compiling[0m tauri-plugin-opener v2.5.2
-[1m[92m   Compiling[0m tauri-plugin-dialog v2.4.2
-[1m[92m   Compiling[0m antigravity_tools v0.1.0 (/Users/lbjlaq/Desktop/antigravity_tauri/src-tauri)
-[1m[96m    Building[0m [=======================> ] 599/617: antigravity_tools(build.r...[1m[96m    Building[0m [=======================> ] 600/617: antigravity_tools(build.r...[1m[96m    Building[0m [=======================> ] 601/617: tauri-plugin-opener(build...[1m[96m    Building[0m [=======================> ] 602/617: tauri(build), tauri-plugi...[1m[96m    Building[0m [=======================> ] 603/617: tauri(build), tauri-plugi...[1m[96m    Building[0m [=======================> ] 604/617: tauri(build), image, taur...[1m[96m    Building[0m [=======================> ] 605/617: tauri(build), image         [1m[96m    Building[0m [=======================> ] 606/617: tauri(build)                [1m[96m    Building[0m [=======================> ] 607/617: tauri-plugin-fs(build), t...[1m[96m    Building[0m [=======================> ] 608/617: tauri-plugin-dialog(build...[1m[96m    Building[0m [=======================> ] 609/617: tauri-plugin-dialog(build...[1m[96m    Building[0m [=======================> ] 610/617: tauri, antigravity_tools(...[1m[96m    Building[0m [=======================> ] 611/617: tauri                       [1m[96m    Building[0m [=======================> ] 612/617: tauri-plugin-opener, taur...[1m[96m    Building[0m [=======================> ] 613/617: tauri-plugin-fs             [1m[96m    Building[0m [=======================> ] 614/617: tauri-plugin-dialog         [1m[96m    Building[0m [=======================> ] 615/617: antigravity_tools           [K[0m[1m[33mwarning[0m[0m[1m: unused variable: `name`[0m
-[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/modules/process.rs:18:13[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m18[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        let name = process.name().to_string_los[0m[0m[1m[38;5;12m...[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_name`[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default[0m
-
-[1m[96m    Building[0m [=======================> ] 615/617: antigravity_tools           [K[0m[1m[33mwarning[0m[0m[1m: unused variable: `name`[0m
-[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/modules/process.rs:188:13[0m
-[0m    [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m188[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        let name = process.name().to_string_lo[0m[0m[1m[38;5;12m...[0m
-[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_name`[0m
-
-[1m[96m    Building[0m [=======================> ] 615/617: antigravity_tools           [K[0m[1m[38;5;9merror[E0716][0m[0m[1m: temporary value dropped while borrowed[0m
-[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/modules/tray.rs:18:27[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m18[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m...[0m[0mn = Image::new(img.into_raw().as_slice(), width, height);[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m                   [0m[0m[1m[38;5;9m^^^^^^^^^^^^^^[0m[0m                           [0m[0m[1m[38;5;12m-[0m[0m [0m[0m[1m[38;5;12mtemporary value is freed at the end of this statement[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m                   [0m[0m[1m[38;5;9m|[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m                   [0m[0m[1m[38;5;9mcreates a temporary value which is freed while still in use[0m
-[0m[1m[38;5;12m...[0m
-[0m[1m[38;5;12m51[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m...[0m[0mon(icon)[0m
-[0m   [0m[0m[1m[38;5;12m|[0m[0m       [0m[0m[1m[38;5;12m----[0m[0m [0m[0m[1m[38;5;12mborrow later used here[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;14mhelp[0m[0m: consider using a `let` binding to create a longer lived value[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-[0m[1m[38;5;12m18[0m[0m [0m[0m[38;5;10m~ [0m[0m    [0m[0m[38;5;10mlet binding = img.into_raw();[0m
-[0m[1m[38;5;12m19[0m[0m [0m[0m[38;5;10m~     [0m[0mlet icon = Image::new([0m[0m[38;5;10mbinding[0m[0m.as_slice(), width, height);[0m
-[0m   [0m[0m[1m[38;5;12m|[0m
-
-[1m[96m    Building[0m [=======================> ] 615/617: antigravity_tools           [K[0m[1mFor more information about this error, try `rustc --explain E0716`.[0m
-[1m[96m    Building[0m [=======================> ] 615/617: antigravity_tools           [K[1m[33mwarning[0m: `antigravity_tools` (lib) generated 2 warnings
-[1m[91merror[0m: could not compile `antigravity_tools` (lib) due to 1 previous error; 2 warnings emitted

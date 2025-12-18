@@ -140,7 +140,10 @@ pub async fn fetch_quota(access_token: &str) -> crate::error::AppResult<QuotaDat
                 
                 let mut quota_data = QuotaData::new();
                 
+                crate::modules::logger::log_info(&format!("Quota API 返回了 {} 个模型:", quota_response.models.len()));
+
                 for (name, info) in quota_response.models {
+                    crate::modules::logger::log_info(&format!("   - {}", name));
                     if let Some(quota_info) = info.quota_info {
                         let percentage = quota_info.remaining_fraction
                             .map(|f| (f * 100.0) as i32)

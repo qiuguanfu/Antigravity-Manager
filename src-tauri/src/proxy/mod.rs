@@ -5,6 +5,7 @@ pub mod project_resolver;
 pub mod server;
 pub mod converter;
 pub mod client;
+pub mod claude_converter;
 
 pub use config::ProxyConfig;
 pub use token_manager::TokenManager;

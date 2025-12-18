@@ -15,16 +15,24 @@ use crate::proxy::{TokenManager, converter, client::GeminiClient};
 #[derive(Clone)]
 pub struct AppState {
     pub token_manager: Arc<TokenManager>,
-    pub anthropic_mapping: Arc<std::collections::HashMap<String, String>>,
+    pub anthropic_mapping: Arc<tokio::sync::RwLock<std::collections::HashMap<String, String>>>,
     pub request_timeout: u64,  // API 请求超时(秒)
+    pub thought_signature_map: Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>, // 思维链签名映射 (ID -> Signature)
 }
 
 /// Axum 服务器实例
 pub struct AxumServer {
     shutdown_tx: Option<oneshot::Sender<()>>,
+    mapping_state: Arc<tokio::sync::RwLock<std::collections::HashMap<String, String>>>,
 }
 
 impl AxumServer {
+    /// 更新模型映射
+    pub async fn update_mapping(&self, new_mapping: std::collections::HashMap<String, String>) {
+        let mut mapping = self.mapping_state.write().await;
+        *mapping = new_mapping;
+        tracing::info!("模型映射已热更新");
+    }
     /// 启动 Axum 服务器
     pub async fn start(
         port: u16,
@@ -32,10 +40,13 @@ impl AxumServer {
         anthropic_mapping: std::collections::HashMap<String, String>,
         request_timeout: u64,  // 新增超时参数
     ) -> Result<(Self, tokio::task::JoinHandle<()>), String> {
+        let mapping_state = Arc::new(tokio::sync::RwLock::new(anthropic_mapping));
+        
         let state = AppState {
             token_manager,
-            anthropic_mapping: Arc::new(anthropic_mapping),
+            anthropic_mapping: mapping_state.clone(),
             request_timeout,
+            thought_signature_map: Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
         };
         
         // 构建路由
@@ -57,6 +68,11 @@ impl AxumServer {
         // 创建关闭通道
         let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
         
+        let server_instance = Self {
+            shutdown_tx: Some(shutdown_tx),
+            mapping_state,
+        };
+        
         // 在新任务中启动服务器
         let handle = tokio::spawn(async move {
             axum::serve(listener, app)
@@ -68,9 +84,7 @@ impl AxumServer {
         });
         
         Ok((
-            Self {
-                shutdown_tx: Some(shutdown_tx),
-            },
+            server_instance,
             handle,
         ))
     }
@@ -336,17 +350,22 @@ fn get_project_id(token: &crate::proxy::token_manager::ProxyToken) -> Result<&st
 
 /// 辅助函数：检查错误是否需要重试
 fn check_retry_error(error_msg: &str) -> RequestResult {
+    // 检查 404/403 - 跳过当前账号，尝试下一个
+    // 参考 CLIProxyAPI 的做法：遇到 404/403 时继续尝试其他账号
+    if error_msg.contains("404") || error_msg.contains("NOT_FOUND") ||
+       error_msg.contains("403") || error_msg.contains("PERMISSION_DENIED") {
+        return RequestResult::Retry(format!("账号不支持此模型或无权限，跳过: {}", error_msg));
+    }
+    
     // 检查 429 或者 配额耗尽 关键字
     if error_msg.contains("429") || 
        error_msg.contains("RESOURCE_EXHAUSTED") || 
        error_msg.contains("QUOTA_EXHAUSTED") ||
        error_msg.contains("The request has been rate limited") ||
-       // 新增：网络错误或响应解析失败也进行重试
-       error_msg.contains("读取响应文本失败") ||
-       error_msg.contains("error decoding response body") ||
        error_msg.contains("closed connection") ||
        error_msg.contains("error sending request") ||
-       error_msg.contains("operation timed out") {
+       error_msg.contains("operation timed out") ||
+       error_msg.contains("RATE_LIMIT_EXCEEDED") {
         return RequestResult::Retry(error_msg.to_string());
     }
     
@@ -370,72 +389,28 @@ async fn list_models_handler(
     let models = serde_json::json!({
         "object": "list",
         "data": [
-            {
-                "id": "gemini-2.5-flash",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-low",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-high",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-image",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-image-16x9",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-image-9x16",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "gemini-3-pro-image-4k",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            },
-            {
-                "id": "claude-sonnet-4-5",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "anthropic"
-            },
-            {
-                "id": "claude-sonnet-4-5-thinking",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "anthropic"
-            },
-            {
-                "id": "claude-opus-4-5-thinking",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "anthropic"
-            },
-            {
-                "id": "gemini-2.5-flash-thinking",
-                "object": "model",
-                "created": 1734336000,
-                "owned_by": "google"
-            }
+            // Gemini Native (from Log)
+            { "id": "gemini-2.5-flash-thinking", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-2.5-flash", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-2.5-flash-lite", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-2.5-pro", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-low", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-high", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-flash", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+
+            // Claude Native (from Log)
+            { "id": "claude-sonnet-4-5", "object": "model", "created": 1734336000, "owned_by": "anthropic", "permission": [] },
+            { "id": "claude-sonnet-4-5-thinking", "object": "model", "created": 1734336000, "owned_by": "anthropic", "permission": [] },
+            { "id": "claude-opus-4-5-thinking", "object": "model", "created": 1734336000, "owned_by": "anthropic", "permission": [] },
+
+            // Internal Image Models
+            { "id": "gemini-3-pro-image", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-image-16x9", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-image-9x16", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-image-4k", "object": "model", "created": 1734336000, "owned_by": "google", "permission": [] },
+            { "id": "gemini-2.5-flash-image", "object": "model", "created": 1759363200, "owned_by": "google", "permission": [] },
+            { "id": "gemini-2.5-flash-image-preview", "object": "model", "created": 1756166400, "owned_by": "google", "permission": [] },
+            { "id": "gemini-3-pro-image-preview", "object": "model", "created": 1737158400, "owned_by": "google", "permission": [] }
         ]
     });
     
@@ -529,6 +504,9 @@ async fn anthropic_messages_handler(
                 },
                 converter::AnthropicContent::Image { .. } => {
                     "[图片]".to_string()
+                },
+                converter::AnthropicContent::Thinking { .. } => {
+                    "[Thinking]".to_string()
                 }
             }
         } else {
@@ -541,29 +519,36 @@ async fn anthropic_messages_handler(
     // 预处理：解析映射后的模型名（仅用于日志显示，实际逻辑在 client 中也会再次处理，或者我们可以这里处理完传进去）
     // 为了保持一致性，我们复用简单的查找逻辑用于日志
     let mapped_model = {
-        let mapping = &state.anthropic_mapping;
-        if let Some(m) = mapping.get(&request.model) {
-            m.clone()
-        } else {
-            // 简单模糊匹配
-            let mut m = request.model.clone();
-            for (k, v) in mapping.iter() {
-                if request.model.contains(k) {
-                    m = v.clone();
-                    break;
+        let mapping_guard = state.anthropic_mapping.read().await;
+            // 鲁棒模糊模型映射 (参考 CLIProxyAPI 经验，与 client.rs 同步)
+            let initial_m = {
+                let mut tmp = request.model.clone();
+                for (k, v) in mapping_guard.iter() {
+                    if request.model.contains(k) {
+                        tmp = v.clone();
+                        break;
+                    }
                 }
-            }
-            // 默认回退逻辑 (与 Client 保持一致)
-            if m == request.model {
-                if request.model.contains("claude") {
-                    if request.model.contains("sonnet") { "gemini-3-pro-high".to_string() } else { "gemini-3-pro-low".to_string() }
-                } else {
-                    m
-                }
+                tmp
+            };
+            
+            let lower_name = initial_m.to_lowercase();
+            // 最终 API 型号转换：将内部型号转换为 Antigravity Daily API 实际支持的名称
+            if lower_name.contains("sonnet") || lower_name.contains("thinking") {
+                "gemini-3-pro-preview".to_string()
+            } else if lower_name.contains("haiku") {
+                "gemini-2.0-flash-exp".to_string()
+            } else if lower_name.contains("opus") {
+                "gemini-3-pro-preview".to_string()
+            } else if lower_name.contains("claude") {
+                "gemini-2.5-flash-thinking".to_string()
+            } else if lower_name == "gemini-3-pro-high" || lower_name == "gemini-3-pro-low" {
+                "gemini-3-pro-preview".to_string()
+            } else if lower_name == "gemini-3-flash" {
+                "gemini-3-flash-preview".to_string()
             } else {
-                m
+                initial_m
             }
-        }
     };
 
     // 截断过长的消息预览
@@ -623,125 +608,124 @@ async fn anthropic_messages_handler(
         }
         let project_id = project_id_result.unwrap();
 
+        let mapping_guard = state.anthropic_mapping.read().await;
+        
         if is_stream {
              let stream_result = client.stream_generate_anthropic(
                 &request,
                 &token.access_token,
                 project_id,
                 &token.session_id,
-                &state.anthropic_mapping
+                &mapping_guard,
+                state.thought_signature_map.clone()
             ).await;
             
             match stream_result {
                 Ok(stream) => {
+                    let mut stream = stream;
+                    
+                    // ⚠️ 预检：如果第一个分片就是错误（例如我们刚加的空响应错误），则触发重试
+                    let first_chunk = match futures::StreamExt::next(&mut stream).await {
+                        Some(Ok(chunk)) => chunk,
+                        Some(Err(e)) => {
+                            let check = check_retry_error(&e);
+                            match check {
+                                RequestResult::Retry(reason) => {
+                                    tracing::warn!("(Anthropic) 账号 {} 请求失败，重试: {}", token.email, reason);
+                                    if attempts >= max_retries {
+                                        return (
+                                            StatusCode::TOO_MANY_REQUESTS,
+                                            Json(serde_json::json!({
+                                                "type": "error",
+                                                "error": { "type": "rate_limit_error", "message": format!("Max retries exceeded. Last error: {}", reason) }
+                                            }))
+                                        ).into_response();
+                                    }
+                                    continue;
+                                },
+                                RequestResult::Error(resp) => return resp,
+                                RequestResult::Success(resp) => return resp,
+                            }
+                        },
+                        None => continue,
+                    };
+
                     // Success! Convert stream to Anthropic SSE
-                    // Setup header for SSE
                     let msg_id = format!("msg_{}", uuid::Uuid::new_v4());
                     let token_clone = token.clone();
-                    let request_clone = Arc::clone(&request);
-                    let mut total_content_length = 0;
-                    let mut total_content = String::new(); // 收集完整内容用于日志
+                    let _request_clone = Arc::clone(&request);
+                    let mut _total_content_length = 0;
+                    let mut total_content = String::new(); 
                     let model_name = request.model.clone();
+
+                    // 将拿出的第一个分片重新包装回流中
+                    let combined_stream = futures::stream::once(futures::future::ready(Ok(first_chunk))).chain(stream);
                     
-                    // SSE processing Logic
                      let sse_stream = async_stream::stream! {
                         // 1. send message_start
-                        let start_event_json = serde_json::json!({
-                            "type": "message_start",
-                            "message": {
-                                "id": msg_id,
-                                "type": "message",
-                                "role": "assistant",
-                                "model": model_name,
-                                "content": [],
-                                "stop_reason": null,
-                                "stop_sequence": null,
-                                "usage": { "input_tokens": 0, "output_tokens": 0 } // Dummy usage
-                            }
-                        });
-                        yield Ok::<_, axum::Error>(Event::default().event("message_start").data(start_event_json.to_string()));
+                        let start_event = crate::proxy::claude_converter::ClaudeStreamConverter::create_message_start(&msg_id, &model_name);
+                        yield Ok::<_, axum::Error>(Event::default().event(start_event.event).data(start_event.data));
 
-                        // 2. send content_block_start
-                        let block_start_json = serde_json::json!({
-                            "type": "content_block_start",
-                            "index": 0,
-                            "content_block": {
-                                "type": "text",
-                                "text": ""
-                            }
-                        });
-                         yield Ok(Event::default().event("content_block_start").data(block_start_json.to_string()));
+                        // 状态机
+                        let mut converter = crate::proxy::claude_converter::ClaudeStreamConverter::new();
                          
-                        // 3. Loop over chunks (which are OpenAI chunks from client)
-                        for await chunk_result in stream {
+                        // 2. Loop over combined stream
+                        for await chunk_result in combined_stream {
                             match chunk_result {
                                 Ok(chunk_str) => {
                                     if chunk_str == "[DONE]" { continue; }
                                     
-                                    // Parse OpenAI Chunk
                                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(&chunk_str) {
-                                        let delta_content = json["choices"][0]["delta"]["content"].as_str().unwrap_or("");
-                                        let finish_reason = json["choices"][0]["finish_reason"].as_str();
-                                        
-                                        if !delta_content.is_empty() {
-                                            total_content_length += delta_content.len();
-                                            total_content.push_str(delta_content);
-                                            let delta_json = serde_json::json!({
-                                                "type": "content_block_delta",
-                                                "index": 0,
-                                                "delta": {
-                                                    "type": "text_delta",
-                                                    "text": delta_content
-                                                }
-                                            });
-                                            yield Ok(Event::default().event("content_block_delta").data(delta_json.to_string()));
+                                        // 记录请求详情以便调试 promptFeedback
+                                        if json.get("candidates").is_none() && json.get("choices").is_none() {
+                                             if let Some(feedback) = json.get("promptFeedback") {
+                                                tracing::warn!("(Anthropic) 收到 promptFeedback (可能被拦截): {}", feedback);
+                                             }
                                         }
-                                        
-                                        if let Some(reason) = finish_reason {
-                                            // Send message_delta with stop reason
-                                            let stop_reason = match reason {
-                                                "stop" => "end_turn",
-                                                "length" => "max_tokens",
-                                                _ => "end_turn"
-                                            };
-                                            
-                                            let msg_delta_json = serde_json::json!({
-                                                "type": "message_delta",
-                                                "delta": {
-                                                    "stop_reason": stop_reason,
-                                                    "stop_sequence": null,
-                                                    "usage": { "output_tokens": 0 }
+
+                                        let events = converter.process_chunk(&json);
+                                        for event in events {
+                                            if event.event == "content_block_delta" {
+                                                if let Ok(data) = serde_json::from_str::<serde_json::Value>(&event.data) {
+                                                    if let Some(delta) = data.get("delta") {
+                                                        if let Some(text) = delta.get("text").and_then(|t| t.as_str()) {
+                                                             _total_content_length += text.len();
+                                                             total_content.push_str(text);
+                                                        } else if let Some(thinking) = delta.get("thinking").and_then(|t| t.as_str()) {
+                                                             // 同时也记录 thinking 内容
+                                                             _total_content_length += thinking.len();
+                                                             total_content.push_str(thinking);
+                                                        }
+                                                    }
                                                 }
-                                            });
-                                            yield Ok(Event::default().event("message_delta").data(msg_delta_json.to_string()));
-                                            
-                                            // Send message_stop
-                                            let stop_json = serde_json::json!({"type": "message_stop"});
-                                            yield Ok(Event::default().event("message_stop").data(stop_json.to_string()));
-                                            
-                                            // 记录响应完成及内容
-                                            if total_content.is_empty() {
-                                                tracing::warn!(
-                                                    "(Anthropic) ✓ {} | 回答为空 (可能是 Gemini 返回了非文本数据)",
-                                                    token_clone.email
-                                                );
-                                            } else {
-                                                let preview_len = total_content.len().min(100);  // 增加到 100 字符
-                                                let response_preview = &total_content[..preview_len];
-                                                let suffix = if total_content.len() > 100 { "..." } else { "" };
-                                                
-                                                tracing::info!(
-                                                    "(Anthropic) ✓ {} | 回答: {}{}",
-                                                    token_clone.email,
-                                                    response_preview,
-                                                    suffix
-                                                );
+                                            } else if event.event == "message_stop" {
+                                                if total_content.is_empty() {
+                                                    tracing::warn!(
+                                                        "(Anthropic) ✓ {} | 回答为空 (可能是 Gemini 返回了非文本数据)",
+                                                        token_clone.email
+                                                    );
+                                                } else {
+                                                    let response_preview: String = total_content.chars().take(100).collect();
+                                                    let suffix = if total_content.chars().count() > 100 { "..." } else { "" };
+                                                    
+                                                    tracing::info!(
+                                                        "(Anthropic) ✓ {} | 回答: {}{}",
+                                                        token_clone.email,
+                                                        response_preview,
+                                                        suffix
+                                                    );
+                                                }
                                             }
+                                            yield Ok(Event::default().event(event.event).data(event.data));
                                         }
                                     }
                                 }
-                                Err(_) => {
-                                     // logging done in client
+                                Err(e) => {
+                                    tracing::error!("Stream error: {}", e);
+                                    let err_check = check_retry_error(&e);
+                                    if let RequestResult::Retry(reason) = err_check {
+                                         tracing::warn!("Stream interrupted (retryable): {}", reason);
+                                    }
                                 }
                             }
                         }
@@ -750,39 +734,38 @@ async fn anthropic_messages_handler(
                     return Sse::new(sse_stream).into_response();
                 },
                 Err(e_msg) => {
-                    // Check retry
                     let check = check_retry_error(&e_msg);
                     match check {
                         RequestResult::Retry(reason) => {
                             tracing::warn!("(Anthropic) 账号 {} 请求失败，重试: {}", token.email, reason);
-                             if attempts >= max_retries {
-                                 return (
+                            if attempts >= max_retries {
+                                return (
                                     StatusCode::TOO_MANY_REQUESTS,
                                     Json(serde_json::json!({
                                         "type": "error",
-                                        "error": {
-                                            "type": "rate_limit_error",
-                                            "message": format!("Max retries exceeded. Last error: {}", reason)
-                                        }
+                                        "error": { "type": "rate_limit_error", "message": format!("Max retries exceeded. Last error: {}", reason) }
                                     }))
                                 ).into_response();
-                             }
-                             continue;
+                            }
+                            continue;
                         },
                         RequestResult::Error(resp) => return resp,
-                        RequestResult::Success(resp) => return resp, // Should not happen here
+                        RequestResult::Success(resp) => return resp,
                     }
                 }
             }
 
         } else {
             // Non-stream: collect streaming response and convert to non-streaming format
+            let mapping_guard = state.anthropic_mapping.read().await;
+            
             let stream_result = client.stream_generate_anthropic(
                 &request,
                 &token.access_token,
                 project_id,
                 &token.session_id,
-                &state.anthropic_mapping
+                &mapping_guard,
+                state.thought_signature_map.clone()
             ).await;
             
             match stream_result {
@@ -813,6 +796,16 @@ async fn anthropic_messages_handler(
                         }
                     }
                     
+                    // 收集完后检查是否为空且为 MAX_TOKENS
+                    if full_text.is_empty() && stop_reason == "max_tokens" {
+                        tracing::warn!("(Anthropic) 非流式：检测到空响应且原因为 MAX_TOKENS，触发重试...");
+                        if attempts >= max_retries {
+                            // 同上错误返回
+                             return (StatusCode::TOO_MANY_REQUESTS, Json(serde_json::json!({ "error": { "message": "Max retries exceeded due to empty MAX_TOKENS responses" } }))).into_response();
+                        }
+                        continue;
+                    }
+                    
                     // Build Anthropic non-streaming response
                     let response = serde_json::json!({
                         "id": format!("msg_{}", uuid::Uuid::new_v4()),
@@ -836,13 +829,12 @@ async fn anthropic_messages_handler(
                         .and_then(|arr| arr.first())
                         .and_then(|c| c["text"].as_str())
                         .unwrap_or("");
-                    let preview_len = answer_text.len().min(60);
-                    let answer_preview = &answer_text[..preview_len];
-                    let suffix = if answer_text.len() > 60 { "..." } else { "" };
+                    let response_preview: String = answer_text.chars().take(60).collect();
+                    let suffix = if answer_text.chars().count() > 60 { "..." } else { "" };
                     
                     tracing::info!(
                         "(Anthropic) ✓ {} | 回答: {}{}",
-                        token.email, answer_preview, suffix
+                        token.email, response_preview, suffix
                     );
                     
                     return (StatusCode::OK, Json(response)).into_response();
