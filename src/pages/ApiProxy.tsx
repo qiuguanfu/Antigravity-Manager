@@ -28,6 +28,7 @@ import ModalDialog from '../components/common/ModalDialog';
 import { showToast } from '../components/common/ToastContainer';
 import { cn } from '../utils/cn';
 import { useProxyModels } from '../hooks/useProxyModels';
+import GroupedSelect, { SelectOption } from '../components/common/GroupedSelect';
 
 interface ProxyStatus {
     running: boolean;
@@ -162,6 +163,23 @@ export default function ApiProxy() {
     const zaiModelMapping = useMemo(() => {
         return appConfig?.proxy.zai?.model_mapping || {};
     }, [appConfig?.proxy.zai?.model_mapping]);
+
+    // 生成分组下拉选项
+    const modelSelectOptions: SelectOption[] = useMemo(() => [
+        // Claude 4.5
+        { value: 'claude-opus-4-5-thinking', label: 'claude-opus-4-5-thinking', group: 'Claude 4.5' },
+        { value: 'claude-sonnet-4-5', label: 'claude-sonnet-4-5', group: 'Claude 4.5' },
+        { value: 'claude-sonnet-4-5-thinking', label: 'claude-sonnet-4-5-thinking', group: 'Claude 4.5' },
+        // Gemini 3
+        { value: 'gemini-3-pro-high', label: 'gemini-3-pro-high', group: 'Gemini 3' },
+        { value: 'gemini-3-pro-low', label: 'gemini-3-pro-low', group: 'Gemini 3' },
+        { value: 'gemini-3-flash', label: 'gemini-3-flash', group: 'Gemini 3' },
+        // Gemini 2.5
+        { value: 'gemini-2.5-pro', label: 'gemini-2.5-pro', group: 'Gemini 2.5' },
+        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash', group: 'Gemini 2.5' },
+        { value: 'gemini-2.5-flash-thinking', label: 'gemini-2.5-flash-thinking', group: 'Gemini 2.5' },
+        { value: 'gemini-2.5-flash-lite', label: 'gemini-2.5-flash-lite', group: 'Gemini 2.5' },
+    ], []);
 
     // 初始化加载
     useEffect(() => {
@@ -1205,29 +1223,11 @@ print(response.text)`;
                                                     <div className="text-[10px] text-gray-500 line-clamp-1">{t('proxy.router.groups.claude_45.desc')}</div>
                                                 </div>
                                             </div>
-                                            <select
-                                                className="select select-sm select-bordered w-full font-mono text-[11px] bg-white/80 dark:bg-base-100/80 backdrop-blur-sm"
-                                                value={appConfig.proxy.anthropic_mapping?.["claude-4.5-series"] || ""}
-                                                onChange={(e) => handleMappingUpdate('anthropic', 'claude-4.5-series', e.target.value)}
-                                            >
-                                                <option value="gemini-3-pro-high">gemini-3-pro-high{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Claude 4.5">
-                                                    <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking</option>
-                                                    <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
-                                                    <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking</option>
-                                                </optgroup>
-                                                <optgroup label="Gemini 3">
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low</option>
-                                                    <option value="gemini-3-flash">gemini-3-flash</option>
-                                                </optgroup>
-                                                <optgroup label="Gemini 2.5">
-                                                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                                                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                                                    <option value="gemini-2.5-flash-thinking">gemini-2.5-flash-thinking</option>
-                                                    <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-                                                </optgroup>
-                                            </select>
+                                            <GroupedSelect
+                                                value={appConfig.proxy.anthropic_mapping?.["claude-4.5-series"] || "gemini-3-pro-high"}
+                                                onChange={(value) => handleMappingUpdate('anthropic', 'claude-4.5-series', value)}
+                                                options={modelSelectOptions}
+                                            />
                                         </div>
 
                                         {/* Claude 3.5 系列 */}
@@ -1241,29 +1241,11 @@ print(response.text)`;
                                                     <div className="text-[10px] text-gray-500 line-clamp-1">{t('proxy.router.groups.claude_35.desc')}</div>
                                                 </div>
                                             </div>
-                                            <select
-                                                className="select select-sm select-bordered w-full font-mono text-[11px] bg-white/80 dark:bg-base-100/80 backdrop-blur-sm"
-                                                value={appConfig.proxy.anthropic_mapping?.["claude-3.5-series"] || ""}
-                                                onChange={(e) => handleMappingUpdate('anthropic', 'claude-3.5-series', e.target.value)}
-                                            >
-                                                <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Claude 4.5">
-                                                    <option value="claude-opus-4-5-thinking">claude-opus-4-5-thinking</option>
-                                                    <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
-                                                    <option value="claude-sonnet-4-5-thinking">claude-sonnet-4-5-thinking</option>
-                                                </optgroup>
-                                                <optgroup label="Gemini 3">
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low</option>
-                                                    <option value="gemini-3-flash">gemini-3-flash</option>
-                                                </optgroup>
-                                                <optgroup label="Gemini 2.5">
-                                                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                                                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                                                    <option value="gemini-2.5-flash-thinking">gemini-2.5-flash-thinking</option>
-                                                    <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-                                                </optgroup>
-                                            </select>
+                                            <GroupedSelect
+                                                value={appConfig.proxy.anthropic_mapping?.["claude-3.5-series"] || "claude-sonnet-4-5-thinking"}
+                                                onChange={(value) => handleMappingUpdate('anthropic', 'claude-3.5-series', value)}
+                                                options={modelSelectOptions}
+                                            />
                                         </div>
 
                                         {/* GPT-4 系列 */}
@@ -1277,18 +1259,11 @@ print(response.text)`;
                                                     <div className="text-[10px] text-gray-500 line-clamp-1">{t('proxy.router.groups.gpt_4.desc')}</div>
                                                 </div>
                                             </div>
-                                            <select
-                                                className="select select-sm select-bordered w-full font-mono text-[11px] bg-white/80 dark:bg-base-100/80 backdrop-blur-sm"
-                                                value={appConfig.proxy.openai_mapping?.["gpt-4-series"] || ""}
-                                                onChange={(e) => handleMappingUpdate('openai', 'gpt-4-series', e.target.value)}
-                                            >
-                                                <option value="gemini-3-pro-high">gemini-3-pro-high{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
-                                                </optgroup>
-                                            </select>
+                                            <GroupedSelect
+                                                value={appConfig.proxy.openai_mapping?.["gpt-4-series"] || "gemini-3-pro-high"}
+                                                onChange={(value) => handleMappingUpdate('openai', 'gpt-4-series', value)}
+                                                options={modelSelectOptions}
+                                            />
                                             <p className="mt-1 text-[9px] text-indigo-500">{t('proxy.router.gemini3_only_warning')}</p>
                                         </div>
 
@@ -1303,18 +1278,11 @@ print(response.text)`;
                                                     <div className="text-[10px] text-gray-500 line-clamp-1">{t('proxy.router.groups.gpt_4o.desc')}</div>
                                                 </div>
                                             </div>
-                                            <select
-                                                className="select select-sm select-bordered w-full font-mono text-[11px] bg-white/80 dark:bg-base-100/80 backdrop-blur-sm"
-                                                value={appConfig.proxy.openai_mapping?.["gpt-4o-series"] || ""}
-                                                onChange={(e) => handleMappingUpdate('openai', 'gpt-4o-series', e.target.value)}
-                                            >
-                                                <option value="gemini-3-flash">gemini-3-flash{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
-                                                </optgroup>
-                                            </select>
+                                            <GroupedSelect
+                                                value={appConfig.proxy.openai_mapping?.["gpt-4o-series"] || "gemini-3-flash"}
+                                                onChange={(value) => handleMappingUpdate('openai', 'gpt-4o-series', value)}
+                                                options={modelSelectOptions}
+                                            />
                                             <p className="mt-1 text-[9px] text-emerald-600">{t('proxy.router.gemini3_only_warning')}</p>
                                         </div>
 
@@ -1329,18 +1297,11 @@ print(response.text)`;
                                                     <div className="text-[10px] text-gray-500 line-clamp-1">{t('proxy.router.groups.gpt_5.desc')}</div>
                                                 </div>
                                             </div>
-                                            <select
-                                                className="select select-sm select-bordered w-full font-mono text-[11px] bg-white/80 dark:bg-base-100/80 backdrop-blur-sm"
-                                                value={appConfig.proxy.openai_mapping?.["gpt-5-series"] || ""}
-                                                onChange={(e) => handleMappingUpdate('openai', 'gpt-5-series', e.target.value)}
-                                            >
-                                                <option value="gemini-3-flash">gemini-3-flash{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
-                                                </optgroup>
-                                            </select>
+                                            <GroupedSelect
+                                                value={appConfig.proxy.openai_mapping?.["gpt-5-series"] || "gemini-3-flash"}
+                                                onChange={(value) => handleMappingUpdate('openai', 'gpt-5-series', value)}
+                                                options={modelSelectOptions}
+                                            />
                                             <p className="mt-1 text-[9px] text-amber-600">{t('proxy.router.gemini3_only_warning')}</p>
                                         </div>
                                     </div>
@@ -1681,6 +1642,6 @@ print(response.text)`;
                     onCancel={() => setIsClearBindingsConfirmOpen(false)}
                 />
             </div >
-        </div>
+        </div >
     );
 }
