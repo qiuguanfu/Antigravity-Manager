@@ -11,6 +11,7 @@ pub mod tray;
 pub mod i18n;
 pub mod proxy_db;
 pub mod device;
+pub mod update_checker;
 
 use crate::models;
 

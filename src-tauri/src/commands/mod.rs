@@ -799,6 +799,27 @@ fn compare_versions(latest: &str, current: &str) -> bool {
     false
 }
 
+/// 获取更新设置
+#[tauri::command]
+pub async fn get_update_settings() -> Result<crate::modules::update_checker::UpdateSettings, String> {
+    crate::modules::update_checker::load_update_settings()
+}
+
+/// 保存更新设置
+#[tauri::command]
+pub async fn save_update_settings(
+    settings: crate::modules::update_checker::UpdateSettings,
+) -> Result<(), String> {
+    crate::modules::update_checker::save_update_settings(&settings)
+}
+
+/// 检查是否应该自动检查更新
+#[tauri::command]
+pub async fn should_check_updates() -> Result<bool, String> {
+    let settings = crate::modules::update_checker::load_update_settings()?;
+    Ok(crate::modules::update_checker::should_check_for_updates(&settings))
+}
+
 /// 切换账号的反代禁用状态
 #[tauri::command]
 pub async fn toggle_proxy_status(

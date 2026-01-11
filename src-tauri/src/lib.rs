@@ -121,6 +121,9 @@ pub fn run() {
             commands::get_antigravity_path,
             commands::get_antigravity_args,
             commands::check_for_updates,
+            commands::get_update_settings,
+            commands::save_update_settings,
+            commands::should_check_updates,
             commands::toggle_proxy_status,
             // 反代服务命令
             commands::proxy::start_proxy_service,
