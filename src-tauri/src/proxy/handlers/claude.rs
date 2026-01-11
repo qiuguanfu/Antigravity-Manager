@@ -673,7 +673,13 @@ pub async fn handle_messages(
             if actual_stream {
                 let stream = response.bytes_stream();
                 let gemini_stream = Box::pin(stream);
-                let mut claude_stream = create_claude_sse_stream(gemini_stream, trace_id.clone(), email.clone());
+                // [v3.3.17] Pass session_id for signature caching
+                let claude_stream = create_claude_sse_stream(
+                    gemini_stream, 
+                    trace_id.clone(), 
+                    email.clone(),
+                    Some(session_id_str.clone())
+                );
 
                 // [FIX #530/#529] Peek first chunk to detect empty response and allow retry
                 // If the stream is empty or fails immediately, we should retry instead of sending 200 OK + empty body

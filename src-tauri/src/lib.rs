@@ -166,5 +166,8 @@ pub fn run() {
                     app_handle.set_activation_policy(tauri::ActivationPolicy::Regular).unwrap_or(());
                 }
             }
+            // Suppress unused variable warnings on non-macOS platforms
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app_handle, event);
         });
 }

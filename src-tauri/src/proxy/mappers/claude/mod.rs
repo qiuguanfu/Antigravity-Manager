@@ -25,6 +25,7 @@ pub fn create_claude_sse_stream(
     mut gemini_stream: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
     trace_id: String,
     email: String,
+    session_id: Option<String>, // [NEW v3.3.17] Session ID for signature caching
 ) -> Pin<Box<dyn Stream<Item = Result<Bytes, String>> + Send>> {
     use async_stream::stream;
     use bytes::BytesMut;
@@ -32,6 +33,7 @@ pub fn create_claude_sse_stream(
 
     Box::pin(stream! {
         let mut state = StreamingState::new();
+        state.session_id = session_id; // Set session ID for signature caching
         let mut buffer = BytesMut::new();
 
         while let Some(chunk_result) = gemini_stream.next().await {
@@ -212,7 +214,7 @@ pub fn emit_force_stop(state: &mut StreamingState) -> Vec<Bytes> {
 }
 
 /// Process grounding metadata from Gemini's googleSearch and emit as Claude web_search blocks
-#[allow(dead_code)]
+#[allow(dead_code)] // Temporarily disabled for Cherry Studio compatibility, kept for future use
 fn process_grounding_metadata(
     metadata: &serde_json::Value,
     state: &mut StreamingState,

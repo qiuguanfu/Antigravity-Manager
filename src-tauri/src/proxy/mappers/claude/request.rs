@@ -2,7 +2,8 @@
 // 对应 transformClaudeRequestIn
 
 use super::models::*;
-use crate::proxy::mappers::signature_store::get_thought_signature;
+use crate::proxy::mappers::signature_store::get_thought_signature; // Deprecated, kept for fallback
+use crate::proxy::session_manager::SessionManager;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
@@ -181,6 +182,10 @@ pub fn transform_claude_request_in(
     
     let claude_req = &cleaned_req; // 后续使用清理后的请求
 
+    // [NEW] Generate session ID for signature tracking
+    // This enables session-isolated signature storage, preventing cross-conversation pollution
+    let session_id = SessionManager::extract_session_id(claude_req);
+    tracing::debug!("[Claude-Request] Session ID: {}", session_id);
 
     // 检测是否有联网工具 (server tool or built-in tool)
     let has_web_search_tool = claude_req
@@ -324,6 +329,7 @@ pub fn transform_claude_request_in(
         is_thinking_enabled,
         allow_dummy_thought,
         &mapped_model,
+        &session_id,
     )?;
 
     // 3. Tools
@@ -567,6 +573,7 @@ fn build_contents(
     is_thinking_enabled: bool,
     allow_dummy_thought: bool,
     mapped_model: &str,
+    session_id: &str, // [NEW v3.3.17] Session ID for signature caching
 ) -> Result<Value, String> {
     let mut contents = Vec::new();
     let mut last_thought_signature: Option<String> = None;
@@ -752,25 +759,42 @@ fn build_contents(
                             // 存储 id -> name 映射
                             tool_id_to_name.insert(id.clone(), name.clone());
 
-                            // Signature resolution logic (Priority: Client -> Context -> Cache -> Global Store)
+                            // Signature resolution logic 
+                            // Priority: Client -> Context -> Session Cache -> Tool Cache -> Global Store (deprecated)
                             // [CRITICAL FIX] Do NOT use skip_thought_signature_validator for Vertex AI
                             // Vertex AI rejects this sentinel value, so we only add thoughtSignature if we have a real one
                             let final_sig = signature.as_ref()
                                 .or(last_thought_signature.as_ref())
                                 .cloned()
                                 .or_else(|| {
-                                    // [NEW] Try layer 1 cache (Tool ID -> Signature)
-                                    crate::proxy::SignatureCache::global().get_tool_signature(id)
+                                    // [NEW v3.3.17] Try session-based signature cache first (Layer 3)
+                                    // This provides conversation-level isolation
+                                    crate::proxy::SignatureCache::global().get_session_signature(&session_id)
                                         .map(|s| {
-                                            tracing::info!("[Claude-Request] Recovered signature from cache for tool_id: {}", id);
+                                            tracing::info!(
+                                                "[Claude-Request] Recovered signature from SESSION cache (session: {}, len: {})", 
+                                                session_id, s.len()
+                                            );
                                             s
                                         })
                                 })
                                 .or_else(|| {
+                                    // Try tool-specific signature cache (Layer 1)
+                                    crate::proxy::SignatureCache::global().get_tool_signature(id)
+                                        .map(|s| {
+                                            tracing::info!("[Claude-Request] Recovered signature from TOOL cache for tool_id: {}", id);
+                                            s
+                                        })
+                                })
+                                .or_else(|| {
+                                    // [DEPRECATED] Global store fallback - kept for backward compatibility
                                     let global_sig = get_thought_signature();
                                     if global_sig.is_some() {
-                                        tracing::info!("[Claude-Request] Using global thought_signature fallback (length: {})", 
-                                            global_sig.as_ref().unwrap().len());
+                                        tracing::warn!(
+                                            "[Claude-Request] Using deprecated GLOBAL thought_signature fallback (length: {}). \
+                                             This indicates session cache miss.", 
+                                            global_sig.as_ref().unwrap().len()
+                                        );
                                     }
                                     global_sig
                                 });

@@ -4,7 +4,7 @@ use tracing::info;
 #[derive(Debug, Default)]
 pub struct ConversationState {
     pub in_tool_loop: bool,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Prepared for future interrupted tool detection
     pub interrupted_tool: bool,
     pub last_assistant_idx: Option<usize>,
 }

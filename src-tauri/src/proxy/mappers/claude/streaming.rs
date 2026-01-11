@@ -151,13 +151,15 @@ pub struct StreamingState {
     trailing_signature: Option<String>,
     pub web_search_query: Option<String>,
     pub grounding_chunks: Option<Vec<serde_json::Value>>,
-    // [IMPROVED] Error recovery 状态追踪
+    // [IMPROVED] Error recovery 状态追踪 (prepared for future use)
     #[allow(dead_code)]
     parse_error_count: usize,
     #[allow(dead_code)]
     last_valid_state: Option<BlockType>,
     // [NEW] Model tracking for signature cache
     pub model_name: Option<String>,
+    // [NEW v3.3.17] Session ID for session-based signature caching
+    pub session_id: Option<String>,
 }
 
 impl StreamingState {
@@ -176,6 +178,7 @@ impl StreamingState {
             parse_error_count: 0,
             last_valid_state: None,
             model_name: None,
+            session_id: None,
         }
     }
 
@@ -456,7 +459,7 @@ impl StreamingState {
     /// 1. 安全关闭当前 block
     /// 2. 递增错误计数器
     /// 3. 在 debug 模式下输出错误信息
-    #[allow(dead_code)]
+    #[allow(dead_code)] // Prepared for future error recovery implementation
     pub fn handle_parse_error(&mut self, raw_data: &str) -> Vec<Bytes> {
         let mut chunks = Vec::new();
 
@@ -655,6 +658,16 @@ impl<'a> PartProcessor<'a> {
                  SignatureCache::global().cache_thinking_family(sig.clone(), model.clone());
             }
             
+            // 2. [NEW v3.3.17] Cache to session-based storage for tool loop recovery
+            if let Some(session_id) = &self.state.session_id {
+                SignatureCache::global().cache_session_signature(session_id, sig.clone());
+                tracing::debug!(
+                    "[Claude-SSE] Cached signature to session {} (length: {})",
+                    session_id,
+                    sig.len()
+                );
+            }
+            
             tracing::debug!(
                 "[Claude-SSE] Captured thought_signature from thinking block (length: {})",
                 sig.len()
@@ -779,6 +792,11 @@ impl<'a> PartProcessor<'a> {
             
             // 2. Cache tool signature (Layer 1 recovery)
             SignatureCache::global().cache_tool_signature(&tool_id, sig.clone());
+            
+            // 3. [NEW v3.3.17] Cache to session-based storage
+            if let Some(session_id) = &self.state.session_id {
+                SignatureCache::global().cache_session_signature(session_id, sig.clone());
+            }
             
              tracing::debug!(
                 "[Claude-SSE] Captured thought_signature for function call (length: {})",
